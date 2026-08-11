@@ -19,6 +19,10 @@ This project follows Spec Driven Design using the `/spec` and `/spec-impl` skill
 
 No test runner is configured yet.
 
+## Skills
+
+Usa siempre /frontend-desing para hacer interfaces de usuario.
+
 ## Architecture
 
 - App Router lives in `app/`. `app/layout.tsx` is the root layout, `app/page.tsx` is the home route.
