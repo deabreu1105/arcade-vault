@@ -21,7 +21,11 @@ No test runner is configured yet.
 
 ## Skills
 
-Usa siempre /frontend-desing para hacer interfaces de usuario.
+Always use /frontend-design to create user interfaces.
+
+## Playwright
+
+Save all Playwright screenshots in the `.playwright-screenshots` directory.
 
 ## Architecture
 
