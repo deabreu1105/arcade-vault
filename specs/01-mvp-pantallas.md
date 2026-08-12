@@ -1,6 +1,6 @@
 # 01 — MVP de pantallas visuales de Arcade Vault
 
-**Estado:** Aprobado
+**Estado:** Implementado
 **Depende de:** —
 **Fecha:** 2026-08-11
 
@@ -61,18 +61,18 @@ Todo vive en el cliente; no hay base de datos ni API.
 
 ## Criterios de aceptación
 
-- [ ] `/` muestra el hero, buscador y chips de categoría; filtrar por texto y/o categoría actualiza el grid sin recargar la página.
-- [ ] Cada tarjeta de juego enlaza a `/juegos/[id]` con el `id` correcto.
-- [ ] `/juegos/[id]` muestra portada, descripción, stats y leaderboard con 10 filas generadas por `seededScores`; un `id` inexistente muestra la página 404 de Next.
-- [ ] Desde el detalle, "Jugar ahora" navega a `/juegos/[id]/jugar` y "Volver al vault" navega a `/`.
-- [ ] `/juegos/[id]/jugar` incrementa la puntuación automáticamente cada ~220ms mientras no está en pausa ni terminado; "Pausa" detiene el incremento y cambia su label a "Reanudar"; "Fin" abre el modal de fin de partida.
-- [ ] En el modal de fin de partida, guardar la puntuación escribe una entrada en `localStorage["av_scores"]` y muestra el toast "puntuación guardada"; "Jugar de nuevo" reinicia el estado del HUD; "Volver al vault" navega a `/`.
-- [ ] `/login` permite alternar entre "Iniciar sesión" y "Crear cuenta"; enviar el formulario (con cualquier valor) o pulsar "Jugar como invitado" establece la sesión, la persiste en `localStorage["av_user"]` y redirige a `/`.
-- [ ] Tras iniciar sesión, el botón de la barra de navegación muestra el nombre del usuario y permite cerrar sesión (borra `localStorage["av_user"]`).
-- [ ] `/salon-de-la-fama` permite cambiar de juego con los tabs, muestra el podio top 3 y la tabla completa; si hay sesión activa, se muestra la fila "tu mejor marca".
-- [ ] El menú de navegación colapsa a un panel lateral en viewport móvil (< 840px) y se puede abrir/cerrar.
-- [ ] `npm run lint` pasa sin errores nuevos.
-- [ ] Ninguna pantalla implementa mecánica de juego jugable — solo datos mock, animaciones CSS y navegación.
+- [x] `/` muestra el hero, buscador y chips de categoría; filtrar por texto y/o categoría actualiza el grid sin recargar la página.
+- [x] Cada tarjeta de juego enlaza a `/juegos/[id]` con el `id` correcto.
+- [x] `/juegos/[id]` muestra portada, descripción, stats y leaderboard con 10 filas generadas por `seededScores`; un `id` inexistente muestra la página 404 de Next.
+- [x] Desde el detalle, "Jugar ahora" navega a `/juegos/[id]/jugar` y "Volver al vault" navega a `/`.
+- [x] `/juegos/[id]/jugar` incrementa la puntuación automáticamente cada ~220ms mientras no está en pausa ni terminado; "Pausa" detiene el incremento y cambia su label a "Reanudar"; "Fin" abre el modal de fin de partida.
+- [x] En el modal de fin de partida, guardar la puntuación escribe una entrada en `localStorage["av_scores"]` y muestra el toast "puntuación guardada"; "Jugar de nuevo" reinicia el estado del HUD; "Volver al vault" navega a `/`.
+- [x] `/login` permite alternar entre "Iniciar sesión" y "Crear cuenta"; enviar el formulario (con cualquier valor) o pulsar "Jugar como invitado" establece la sesión, la persiste en `localStorage["av_user"]` y redirige a `/`.
+- [x] Tras iniciar sesión, el botón de la barra de navegación muestra el nombre del usuario y permite cerrar sesión (borra `localStorage["av_user"]`).
+- [x] `/salon-de-la-fama` permite cambiar de juego con los tabs, muestra el podio top 3 y la tabla completa; si hay sesión activa, se muestra la fila "tu mejor marca".
+- [x] El menú de navegación colapsa a un panel lateral en viewport móvil (< 840px) y se puede abrir/cerrar.
+- [x] `npm run lint` pasa sin errores nuevos.
+- [x] Ninguna pantalla implementa mecánica de juego jugable — solo datos mock, animaciones CSS y navegación.
 
 ## Decisiones tomadas y descartadas
 
