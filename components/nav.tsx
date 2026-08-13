@@ -73,7 +73,11 @@ export function Nav() {
         <Link href="/biblioteca" className={isActive("biblioteca") ? "active" : ""} onClick={close}>
           Biblioteca
         </Link>
-        <Link href="/salon-de-la-fama" className={isActive("salon") ? "active" : ""} onClick={close}>
+        <Link
+          href="/salon-de-la-fama"
+          className={isActive("salon") ? "active" : ""}
+          onClick={close}
+        >
           Salón de la Fama
         </Link>
         <Link href="/acerca-de" className={isActive("acerca-de") ? "active" : ""} onClick={close}>
@@ -83,7 +87,10 @@ export function Nav() {
           {user ? "Cuenta" : "Iniciar Sesión"}
         </Link>
         <div style={{ flex: 1 }}></div>
-        <div className="pixel" style={{ fontSize: 9, color: "var(--ink-faint)", letterSpacing: "0.16em" }}>
+        <div
+          className="pixel"
+          style={{ fontSize: 9, color: "var(--ink-faint)", letterSpacing: "0.16em" }}
+        >
           CRÉDITOS · 03
         </div>
       </aside>

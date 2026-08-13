@@ -29,7 +29,15 @@ export default function LoginPage() {
         <div className="auth-header">
           <div className="mark"></div>
           <h2 className="neon-cyan">ARCADE VAULT</h2>
-          <div className="mono" style={{ fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.16em", marginTop: 6 }}>
+          <div
+            className="mono"
+            style={{
+              fontSize: 11,
+              color: "var(--ink-faint)",
+              letterSpacing: "0.16em",
+              marginTop: 6,
+            }}
+          >
             ACCESO AL SISTEMA · v2.6
           </div>
         </div>
@@ -46,17 +54,31 @@ export default function LoginPage() {
         <form onSubmit={submit}>
           <div className="field">
             <label>Usuario</label>
-            <input value={username} onChange={(e) => setUsername(e.target.value)} placeholder="px_kai" />
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="px_kai"
+            />
           </div>
           {tab === "up" && (
             <div className="field slide-in">
               <label>Correo electrónico</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jugador@vault.gg" />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="jugador@vault.gg"
+              />
             </div>
           )}
           <div className="field">
             <label>Contraseña</label>
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder="••••••••" />
+            <input
+              type="password"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              placeholder="••••••••"
+            />
           </div>
 
           <button className="btn lg" type="submit" style={{ width: "100%", marginTop: 8 }}>
@@ -64,7 +86,11 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <button className="btn ghost" style={{ width: "100%", marginTop: 10 }} onClick={playAsGuest}>
+        <button
+          className="btn ghost"
+          style={{ width: "100%", marginTop: 10 }}
+          onClick={playAsGuest}
+        >
           JUGAR COMO INVITADO
         </button>
 
@@ -78,7 +104,15 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <div style={{ marginTop: 18, textAlign: "center", fontSize: 11, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+        <div
+          style={{
+            marginTop: 18,
+            textAlign: "center",
+            fontSize: 11,
+            color: "var(--ink-faint)",
+            letterSpacing: "0.1em",
+          }}
+        >
           AL ENTRAR ACEPTAS LOS TÉRMINOS DEL SALÓN ARCADE
         </div>
       </div>
