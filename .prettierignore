@@ -1,0 +1,13 @@
+.next
+out
+build
+node_modules
+public
+.playwright-screenshots
+package-lock.json
+next-env.d.ts
+
+# Third-party skill installs and vendored reference material — not app source.
+.agents
+references
+skills-lock.json

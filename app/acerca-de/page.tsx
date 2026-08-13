@@ -61,14 +61,18 @@ export default function AboutPage() {
         <div className="kicker pixel neon-yellow">▸ ACERCA DE</div>
         <h1 className="about-title">ACERCA DE ARCADE VAULT</h1>
         <p className="about-mission">
-          ARCADE VAULT nació del amor por los videojuegos clásicos. Nuestra misión es preservar y celebrar
-          los arcades que definieron una generación, haciéndolos accesibles para todos, en cualquier lugar
-          y sin costo.
+          ARCADE VAULT nació del amor por los videojuegos clásicos. Nuestra misión es preservar y
+          celebrar los arcades que definieron una generación, haciéndolos accesibles para todos, en
+          cualquier lugar y sin costo.
         </p>
 
         <div className="highlight-row">
           {HIGHLIGHTS.map((h, i) => (
-            <div key={h.i} className={"highlight " + h.c} style={{ transitionDelay: `${i * 80}ms` }}>
+            <div
+              key={h.i}
+              className={"highlight " + h.c}
+              style={{ transitionDelay: `${i * 80}ms` }}
+            >
               <HighlightIcon kind={h.i} />
               <div className="hl-text pixel">{h.t}</div>
             </div>
@@ -137,7 +141,12 @@ export default function AboutPage() {
                     placeholder="Cuéntanos qué tienes en mente…"
                   ></textarea>
                 </div>
-                <button className="btn xl press" type="submit" style={{ width: "100%" }} disabled={status === "loading"}>
+                <button
+                  className="btn xl press"
+                  type="submit"
+                  style={{ width: "100%" }}
+                  disabled={status === "loading"}
+                >
                   {status === "loading" ? "▶  ENVIANDO…" : "▶  ENVIAR MENSAJE"}
                 </button>
                 {status === "error" && <div className="contact-error">✕ {errorMsg}</div>}
@@ -158,8 +167,8 @@ export default function AboutPage() {
                   <div className="line dim">[OK] Validando contenido…</div>
                   <div className="line dim">[OK] Transmitiendo paquete…</div>
                   <div className="line success">
-                    &gt; MENSAJE RECIBIDO. TE RESPONDEREMOS PRONTO. GRACIAS, {sentName.toUpperCase()}.
-                    <span className="caret">_</span>
+                    &gt; MENSAJE RECIBIDO. TE RESPONDEREMOS PRONTO. GRACIAS,{" "}
+                    {sentName.toUpperCase()}.<span className="caret">_</span>
                   </div>
                   <div style={{ marginTop: 18 }}>
                     <button className="btn ghost" type="button" onClick={resetForm}>
