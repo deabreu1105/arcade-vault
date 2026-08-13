@@ -1,6 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { signOutAction } from "@/app/login/actions";
 
 export type SessionUser = { name: string } | null;
 
@@ -15,7 +18,7 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readUser(): SessionUser {
+function readGuestUser(): SessionUser {
   if (typeof window === "undefined") return null;
   try {
     return JSON.parse(window.localStorage.getItem("av_user") || "null");
@@ -25,17 +28,58 @@ function readUser(): SessionUser {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<SessionUser>(readUser);
+  const [guestUser, setGuestUser] = useState<SessionUser>(readGuestUser);
+  const [supabaseUser, setSupabaseUser] = useState<SessionUser>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    const supabase = createClient();
+    let cancelled = false;
+
+    const resolveProfile = async (userId: string) => {
+      const { data } = await supabase.from("profiles").select("username").eq("id", userId).single();
+      if (!cancelled) setSupabaseUser(data ? { name: data.username } : null);
+    };
+
+    // supabase.auth.getUser() hits the Auth server directly, unlike getSession(),
+    // so it picks up a session created moments ago by a Server Action on a
+    // different (server-side) client — which a soft navigation wouldn't otherwise reveal.
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (cancelled) return;
+      if (user) resolveProfile(user.id);
+      else setSupabaseUser(null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        resolveProfile(session.user.id);
+      } else {
+        setSupabaseUser(null);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
+  }, [pathname]);
 
   const login = (nextUser: SessionUser) => {
-    setUser(nextUser);
+    setGuestUser(nextUser);
     if (typeof window !== "undefined") {
       window.localStorage.setItem("av_user", JSON.stringify(nextUser));
     }
   };
 
   const logout = () => {
-    setUser(null);
+    if (supabaseUser) {
+      setSupabaseUser(null);
+      void signOutAction();
+      return;
+    }
+    setGuestUser(null);
     if (typeof window !== "undefined") {
       window.localStorage.removeItem("av_user");
     }
@@ -53,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, saveScore }}>
+    <AuthContext.Provider value={{ user: supabaseUser ?? guestUser, login, logout, saveScore }}>
       {children}
     </AuthContext.Provider>
   );

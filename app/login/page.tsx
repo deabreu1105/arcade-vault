@@ -1,22 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
+import { signInAction, signUpAction } from "./actions";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [tab, setTab] = useState<"in" | "up">("in");
-  const [username, setUsername] = useState("");
-  const [pass, setPass] = useState("");
-  const [email, setEmail] = useState("");
 
-  const submit = (e: React.FormEvent) => {
-    e.preventDefault();
-    login({ name: (username || "PLAYER1").toUpperCase().slice(0, 10) });
-    router.push("/biblioteca");
-  };
+  const [signInState, signInFormAction, signInPending] = useActionState(signInAction, null);
+  const [signUpState, signUpFormAction, signUpPending] = useActionState(signUpAction, null);
 
   const playAsGuest = () => {
     login(null);
@@ -51,40 +46,63 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <form onSubmit={submit}>
-          <div className="field">
-            <label>Usuario</label>
-            <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="px_kai"
-            />
-          </div>
-          {tab === "up" && (
+        {tab === "in" ? (
+          <form action={signInFormAction}>
+            <div className="field">
+              <label>Correo electrónico</label>
+              <input type="email" name="email" placeholder="jugador@vault.gg" required />
+            </div>
+            <div className="field">
+              <label>Contraseña</label>
+              <input type="password" name="password" placeholder="••••••••" required />
+            </div>
+
+            {signInState?.error && (
+              <div className="mono" style={{ color: "var(--magenta)", fontSize: 11, marginTop: 8 }}>
+                {signInState.error}
+              </div>
+            )}
+
+            <button
+              className="btn lg"
+              type="submit"
+              style={{ width: "100%", marginTop: 8 }}
+              disabled={signInPending}
+            >
+              {signInPending ? "ENTRANDO..." : "ENTRAR AL VAULT"}
+            </button>
+          </form>
+        ) : (
+          <form action={signUpFormAction}>
+            <div className="field">
+              <label>Usuario</label>
+              <input name="username" placeholder="px_kai" required />
+            </div>
             <div className="field slide-in">
               <label>Correo electrónico</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="jugador@vault.gg"
-              />
+              <input type="email" name="email" placeholder="jugador@vault.gg" required />
             </div>
-          )}
-          <div className="field">
-            <label>Contraseña</label>
-            <input
-              type="password"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              placeholder="••••••••"
-            />
-          </div>
+            <div className="field">
+              <label>Contraseña</label>
+              <input type="password" name="password" placeholder="••••••••" required />
+            </div>
 
-          <button className="btn lg" type="submit" style={{ width: "100%", marginTop: 8 }}>
-            {tab === "in" ? "ENTRAR AL VAULT" : "CREAR Y JUGAR"}
-          </button>
-        </form>
+            {signUpState?.error && (
+              <div className="mono" style={{ color: "var(--magenta)", fontSize: 11, marginTop: 8 }}>
+                {signUpState.error}
+              </div>
+            )}
+
+            <button
+              className="btn lg"
+              type="submit"
+              style={{ width: "100%", marginTop: 8 }}
+              disabled={signUpPending}
+            >
+              {signUpPending ? "CREANDO..." : "CREAR Y JUGAR"}
+            </button>
+          </form>
+        )}
 
         <button
           className="btn ghost"
