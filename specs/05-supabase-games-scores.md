@@ -1,6 +1,6 @@
 # 05 — Supabase: catálogo de juegos y puntuaciones reales
 
-**Estado:** Draft
+**Estado:** Implementado
 **Depende de:** SPEC 01, SPEC 04
 **Fecha:** 2026-08-13
 
@@ -75,16 +75,16 @@
 
 ## Criterios de aceptación
 
-- [ ] `/biblioteca` muestra los juegos reales desde la tabla `games`, con buscador y chips de categoría funcionando igual que antes sobre los datos reales.
-- [ ] Cada tarjeta de juego muestra `best` y `plays` calculados en tiempo real desde `scores` (no columnas fijas).
-- [ ] `/juegos/[id]` con un `id` inexistente en `games` muestra la página 404 de Next, igual que antes.
-- [ ] `/juegos/[id]` muestra un leaderboard real (top 10 por `score` descendente) con el `username` de cada jugador, o el estado vacío si el juego no tiene puntuaciones.
-- [ ] Terminar una partida logueado como usuario real y guardar la puntuación inserta una fila en `scores` con el `user_id` correcto y hace que esa puntuación aparezca en `/juegos/[id]` y `/salon-de-la-fama` para ese juego.
-- [ ] Terminar una partida como invitado guarda la puntuación en `localStorage["av_scores"]` exactamente como antes de este spec, y esa puntuación NO aparece en el leaderboard real.
-- [ ] `/salon-de-la-fama` permite cambiar de juego con los tabs y muestra el podio + tabla con datos reales de `scores`/`profiles`; un juego sin puntuaciones muestra el estado vacío en vez de un podio con datos falsos.
-- [ ] La fila "tu mejor marca" en `/salon-de-la-fama` solo aparece si el usuario real logueado tiene al menos una puntuación guardada para el juego activo, y muestra su valor real (no un placeholder).
-- [ ] `lib/data.ts` ya no exporta `GAMES`, `PLAYERS` ni `seededScores`.
-- [ ] `npm run lint` pasa sin errores nuevos.
+- [x] `/biblioteca` muestra los juegos reales desde la tabla `games`, con buscador y chips de categoría funcionando igual que antes sobre los datos reales.
+- [x] Cada tarjeta de juego muestra `best` y `plays` calculados en tiempo real desde `scores` (no columnas fijas).
+- [x] `/juegos/[id]` con un `id` inexistente en `games` muestra la página 404 de Next, igual que antes.
+- [x] `/juegos/[id]` muestra un leaderboard real (top 10 por `score` descendente) con el `username` de cada jugador, o el estado vacío si el juego no tiene puntuaciones.
+- [x] Terminar una partida logueado como usuario real y guardar la puntuación inserta una fila en `scores` con el `user_id` correcto y hace que esa puntuación aparezca en `/juegos/[id]` y `/salon-de-la-fama` para ese juego.
+- [x] Terminar una partida como invitado guarda la puntuación en `localStorage["av_scores"]` exactamente como antes de este spec, y esa puntuación NO aparece en el leaderboard real.
+- [x] `/salon-de-la-fama` permite cambiar de juego con los tabs y muestra el podio + tabla con datos reales de `scores`/`profiles`; un juego sin puntuaciones muestra el estado vacío en vez de un podio con datos falsos.
+- [x] La fila "tu mejor marca" en `/salon-de-la-fama` solo aparece si el usuario real logueado tiene al menos una puntuación guardada para el juego activo, y muestra su valor real (no un placeholder).
+- [x] `lib/data.ts` ya no exporta `GAMES`, `PLAYERS` ni `seededScores`.
+- [x] `npm run lint` pasa sin errores nuevos.
 
 ## Decisiones tomadas y descartadas
 

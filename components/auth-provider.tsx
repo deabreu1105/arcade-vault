@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { signOutAction } from "@/app/login/actions";
 
-export type SessionUser = { name: string } | null;
+export type SessionUser = { id: string; name: string } | null;
 
 type ScoreEntry = { game: string; score: number; name: string };
 
@@ -38,7 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const resolveProfile = async (userId: string) => {
       const { data } = await supabase.from("profiles").select("username").eq("id", userId).single();
-      if (!cancelled) setSupabaseUser(data ? { name: data.username } : null);
+      if (!cancelled) setSupabaseUser(data ? { id: userId, name: data.username } : null);
     };
 
     // supabase.auth.getUser() hits the Auth server directly, unlike getSession(),
