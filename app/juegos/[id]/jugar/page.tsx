@@ -2,15 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { notFound, useParams, useRouter } from "next/navigation";
-import { GAMES } from "@/lib/data";
+import type { Game } from "@/lib/data";
 import { useAuth } from "@/components/auth-provider";
+import { getGameForPlay, saveRealScoreAction } from "./actions";
 
 export default function GamePlayerPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, saveScore } = useAuth();
-  const game = GAMES.find((g) => g.id === id);
-  if (!game) notFound();
+  const [game, setGame] = useState<Game | null | undefined>(undefined);
+
+  useEffect(() => {
+    let cancelled = false;
+    getGameForPlay(id).then((g) => {
+      if (!cancelled) setGame(g);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (game === null) notFound();
 
   const [score, setScore] = useState(0);
   const [lives, setLives] = useState(3);
@@ -35,6 +47,31 @@ export default function GamePlayerPage() {
     setOver(false);
     setSaved(false);
   };
+
+  const handleSaveScore = async () => {
+    if (user) {
+      await saveRealScoreAction({ gameId: game!.id, score });
+    } else {
+      saveScore({ game: game!.id, score, name });
+    }
+    setSaved(true);
+  };
+
+  if (game === undefined) {
+    return (
+      <div className="av-player fade-in">
+        <div className="crt">
+          <div className="crt-screen">
+            <div className="crt-content">
+              <div className="pixel neon-cyan" style={{ fontSize: 16 }}>
+                CARGANDO…
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="av-player fade-in">
@@ -117,18 +154,18 @@ export default function GamePlayerPage() {
             <div className="final">{score.toLocaleString("es-ES")}</div>
             {!saved ? (
               <div className="input-row">
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value.toUpperCase().slice(0, 10))}
-                  placeholder="TUS INICIALES"
-                />
-                <button
-                  className="btn yellow"
-                  onClick={() => {
-                    saveScore({ game: game.id, score, name });
-                    setSaved(true);
-                  }}
-                >
+                {user ? (
+                  <div className="mono" style={{ fontSize: 14, color: "var(--ink)" }}>
+                    {user.name}
+                  </div>
+                ) : (
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value.toUpperCase().slice(0, 10))}
+                    placeholder="TUS INICIALES"
+                  />
+                )}
+                <button className="btn yellow" onClick={handleSaveScore}>
                   GUARDAR PUNTUACIÓN
                 </button>
               </div>

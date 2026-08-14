@@ -1,15 +1,13 @@
-"use client";
-
 import Link from "next/link";
-import { notFound, useParams } from "next/navigation";
-import { GAMES, seededScores } from "@/lib/data";
+import { notFound } from "next/navigation";
+import { getGame, getGameStats, getLeaderboard } from "@/lib/supabase/queries";
 
-export default function GameDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const game = GAMES.find((g) => g.id === id);
+export default async function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const game = await getGame(id);
   if (!game) notFound();
 
-  const scores = seededScores(id.length * 17 + 3, 10);
+  const [stats, scores] = await Promise.all([getGameStats(id), getLeaderboard(id)]);
 
   return (
     <div className="av-detail fade-in">
@@ -29,7 +27,7 @@ export default function GameDetailPage() {
           <div className="stat-strip">
             <div>
               <div className="l">Partidas</div>
-              <div className="v">{game.plays}</div>
+              <div className="v">{stats.plays}</div>
             </div>
             <div>
               <div className="l">Mejor global</div>
@@ -37,7 +35,7 @@ export default function GameDetailPage() {
                 className="v"
                 style={{ color: "var(--magenta)", textShadow: "0 0 6px rgba(255,0,110,0.5)" }}
               >
-                {game.best.toLocaleString("es-ES")}
+                {stats.best.toLocaleString("es-ES")}
               </div>
             </div>
             <div>
@@ -64,23 +62,29 @@ export default function GameDetailPage() {
       <aside>
         <div className="leaderboard">
           <h3>MEJORES PUNTUACIONES</h3>
-          {scores.map((r, i) => (
-            <div
-              key={r.name}
-              className={
-                "lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
-              }
-            >
-              <div className="rk">#{String(r.rank).padStart(2, "0")}</div>
-              <div className="pl">
-                {r.name}
-                <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
-                  {r.date}
-                </div>
-              </div>
-              <div className="sc">{r.score.toLocaleString("es-ES")}</div>
+          {scores.length === 0 ? (
+            <div style={{ padding: "24px 0", color: "var(--ink-faint)", textAlign: "center" }}>
+              Aún no hay puntuaciones para este juego. ¡Sé el primero!
             </div>
-          ))}
+          ) : (
+            scores.map((r, i) => (
+              <div
+                key={r.username + i}
+                className={
+                  "lb-row" + (i === 0 ? " top1" : i === 1 ? " top2" : i === 2 ? " top3" : "")
+                }
+              >
+                <div className="rk">#{String(i + 1).padStart(2, "0")}</div>
+                <div className="pl">
+                  {r.username}
+                  <div style={{ fontSize: 10, color: "var(--ink-faint)", letterSpacing: "0.1em" }}>
+                    {new Date(r.createdAt).toLocaleDateString("es-ES")}
+                  </div>
+                </div>
+                <div className="sc">{r.score.toLocaleString("es-ES")}</div>
+              </div>
+            ))
+          )}
         </div>
       </aside>
     </div>

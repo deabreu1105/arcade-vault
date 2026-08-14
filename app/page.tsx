@@ -1,7 +1,6 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { GAMES, type Game } from "@/lib/data";
 import { FloatingSilhouettes } from "@/components/home/floating-silhouettes";
 import { FeatureIcon } from "@/components/home/feature-icon";
 import { useReveal } from "@/hooks/use-reveal";
@@ -51,7 +50,18 @@ const TOP_PLAYERS = [
   { r: 5, p: "GLITCHA", s: 138900 },
 ];
 
-function MiniCard({ game, onClick }: { game: Game; onClick: () => void }) {
+type PreviewGame = { id: string; title: string; cat: string; cover: string };
+
+const PREVIEW_GAMES: PreviewGame[] = [
+  { id: "bloque-buster", title: "BLOQUE BUSTER", cat: "ARCADE", cover: "cover-bricks" },
+  { id: "caida", title: "CAÍDA", cat: "PUZZLE", cover: "cover-tetro" },
+  { id: "serpentina", title: "SERPENTINA", cat: "ARCADE", cover: "cover-snake" },
+  { id: "gloton", title: "GLOTÓN", cat: "ARCADE", cover: "cover-glot" },
+  { id: "invasores", title: "INVASORES", cat: "SHOOTER", cover: "cover-invaders" },
+  { id: "rocas", title: "ROCAS", cat: "SHOOTER", cover: "cover-rocas" },
+];
+
+function MiniCard({ game, onClick }: { game: PreviewGame; onClick: () => void }) {
   return (
     <div className="mini-card" onClick={onClick}>
       <div className="mini-cover">
@@ -133,7 +143,7 @@ export default function Home() {
           <div className="section-rule"></div>
         </div>
         <div className="mini-rail">
-          {GAMES.slice(0, 6).map((g) => (
+          {PREVIEW_GAMES.map((g) => (
             <MiniCard key={g.id} game={g} onClick={() => router.push(`/juegos/${g.id}`)} />
           ))}
         </div>
