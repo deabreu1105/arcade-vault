@@ -131,3 +131,41 @@ export async function insertScore({
 
   if (error) throw error;
 }
+
+export async function isCurrentUserAdmin(): Promise<boolean> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data?.is_admin ?? false;
+}
+
+export async function createGame(game: Game): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("games").insert(game);
+
+  if (error) throw error;
+}
+
+export async function updateGame(id: string, game: Omit<Game, "id">): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("games").update(game).eq("id", id);
+
+  if (error) throw error;
+}
+
+export async function deleteGame(id: string): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.from("games").delete().eq("id", id);
+
+  if (error) throw error;
+}
