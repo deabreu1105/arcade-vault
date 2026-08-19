@@ -1,17 +1,13 @@
 // Motor de Asteroides — portado de references/started-games/02-asteroids/game.js
 // Sin HUD ni overlay propios: el estado se expone vía callbacks para que la UI de React lo dibuje.
+// El andamiaje de loop/pausa/ciclo de vida vive en ArcadeEngine (components/games/engine-base.ts).
+
+import { ArcadeEngine, type EngineCallbacks } from "@/components/games/engine-base";
+
+export type { EngineCallbacks };
 
 export const ENGINE_WIDTH = 800;
 export const ENGINE_HEIGHT = 600;
-
-export type EngineCallbacks = {
-  onScoreChange: (score: number) => void;
-  onLivesChange: (lives: number) => void;
-  onLevelChange: (level: number) => void;
-  onGameOver: (score: number) => void;
-};
-
-type GameState = "playing" | "dead" | "gameover";
 
 const wrap = (v: number, max: number) => ((v % max) + max) % max;
 const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
@@ -305,10 +301,7 @@ class Particle {
   }
 }
 
-export class AsteroidsEngine {
-  private ctx: CanvasRenderingContext2D;
-  private callbacks: EngineCallbacks;
-
+export class AsteroidsEngine extends ArcadeEngine {
   private ship = new Ship();
   private bullets: Bullet[] = [];
   private asteroids: Asteroid[] = [];
@@ -316,82 +309,7 @@ export class AsteroidsEngine {
   private powerUps: PowerUp[] = [];
   private powerUpSpawned = false;
   private killsSinceSpawn = 0;
-
-  private score = 0;
-  private lives = 3;
-  private level = 1;
-  private state: GameState = "playing";
   private deadTimer = 0;
-
-  private keys: Record<string, boolean> = {};
-  private justPressed: Record<string, boolean> = {};
-
-  private paused = false;
-  private running = false;
-  private lastTime: number | null = null;
-  private rafId: number | null = null;
-  private tick = (ts: number) => {
-    const dt = this.lastTime === null ? 0 : Math.min((ts - this.lastTime) / 1000, 0.05);
-    this.lastTime = ts;
-    if (!this.paused) this.update(dt);
-    this.draw();
-    this.rafId = requestAnimationFrame(this.tick);
-  };
-
-  constructor(ctx: CanvasRenderingContext2D, callbacks: EngineCallbacks) {
-    this.ctx = ctx;
-    this.callbacks = callbacks;
-  }
-
-  start() {
-    this.initGame();
-    if (this.running) return;
-    this.running = true;
-    this.lastTime = null;
-    this.rafId = requestAnimationFrame(this.tick);
-  }
-
-  pause() {
-    this.paused = true;
-  }
-
-  resume() {
-    this.paused = false;
-    this.lastTime = null;
-  }
-
-  restart() {
-    this.initGame();
-    this.paused = false;
-    this.lastTime = null;
-  }
-
-  forceGameOver() {
-    if (this.state === "gameover") return;
-    this.state = "gameover";
-    this.callbacks.onGameOver(this.score);
-  }
-
-  destroy() {
-    this.running = false;
-    if (this.rafId !== null) cancelAnimationFrame(this.rafId);
-    this.rafId = null;
-  }
-
-  handleKeyDown(code: string) {
-    if (!this.keys[code]) this.justPressed[code] = true;
-    this.keys[code] = true;
-  }
-
-  handleKeyUp(code: string) {
-    this.keys[code] = false;
-  }
-
-  private pressed(code: string) {
-    const val = !!this.justPressed[code];
-    this.justPressed[code] = false;
-    return val;
-  }
 
   private spawnAsteroids(count: number) {
     const SAFE_DIST = 130;
@@ -405,7 +323,7 @@ export class AsteroidsEngine {
     }
   }
 
-  private initGame() {
+  protected init() {
     this.ship = new Ship();
     this.bullets = [];
     this.asteroids = [];
@@ -414,17 +332,15 @@ export class AsteroidsEngine {
     this.powerUpSpawned = false;
     this.killsSinceSpawn = 0;
     this.score = 0;
-    this.lives = 3;
-    this.level = 1;
     this.state = "playing";
     this.spawnAsteroids(4);
     this.callbacks.onScoreChange(this.score);
-    this.callbacks.onLivesChange(this.lives);
-    this.callbacks.onLevelChange(this.level);
+    this.setLives(3);
+    this.setLevel(1);
   }
 
   private nextLevel() {
-    this.level++;
+    this.setLevel(this.level + 1);
     this.bullets = [];
     this.particles = [];
     this.powerUps = [];
@@ -432,7 +348,6 @@ export class AsteroidsEngine {
     this.killsSinceSpawn = 0;
     this.ship.reset();
     this.spawnAsteroids(3 + this.level);
-    this.callbacks.onLevelChange(this.level);
   }
 
   private explode(x: number, y: number, count = 8) {
@@ -442,23 +357,16 @@ export class AsteroidsEngine {
   private killShip() {
     this.explode(this.ship.x, this.ship.y, 14);
     this.ship.dead = true;
-    this.lives--;
-    this.callbacks.onLivesChange(this.lives);
+    this.setLives(this.lives - 1);
     if (this.lives <= 0) {
-      this.state = "gameover";
-      this.callbacks.onGameOver(this.score);
+      this.gameOver();
     } else {
       this.state = "dead";
       this.deadTimer = 2;
     }
   }
 
-  private addScore(points: number) {
-    this.score += points;
-    this.callbacks.onScoreChange(this.score);
-  }
-
-  private update(dt: number) {
+  protected update(dt: number) {
     if (this.state === "gameover") return;
 
     if (this.state === "dead") {
@@ -474,9 +382,9 @@ export class AsteroidsEngine {
     }
 
     const input: ShipInput = {
-      left: !!this.keys["ArrowLeft"],
-      right: !!this.keys["ArrowRight"],
-      up: !!this.keys["ArrowUp"],
+      left: this.isDown("ArrowLeft"),
+      right: this.isDown("ArrowRight"),
+      up: this.isDown("ArrowUp"),
     };
 
     if (this.pressed("Space")) {
@@ -535,7 +443,7 @@ export class AsteroidsEngine {
     if (this.asteroids.length === 0) this.nextLevel();
   }
 
-  private draw() {
+  protected draw() {
     const ctx = this.ctx;
     ctx.fillStyle = "#000";
     ctx.fillRect(0, 0, ENGINE_WIDTH, ENGINE_HEIGHT);
