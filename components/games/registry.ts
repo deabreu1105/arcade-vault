@@ -56,6 +56,15 @@ export const GAME_RUNTIMES: Record<string, GameRuntime> = {
       return new ArkanoidEngine(ctx, callbacks);
     },
   },
+  snake: {
+    width: 480,
+    height: 480,
+    capturedKeys: ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"],
+    loadEngine: async (ctx, callbacks) => {
+      const { SnakeEngine } = await import("@/components/games/snake/engine");
+      return new SnakeEngine(ctx, callbacks);
+    },
+  },
 };
 
 export function getGameRuntime(id: string): GameRuntime | undefined {
