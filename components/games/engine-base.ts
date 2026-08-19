@@ -98,6 +98,11 @@ export abstract class ArcadeEngine {
     this.keys[code] = false;
   }
 
+  /** No-op por defecto; los motores que usan `pointer: true` en su GameRuntime la sobreescriben. */
+  handlePointerMove(_x: number, _y: number) {}
+  /** No-op por defecto; los motores que usan `pointer: true` en su GameRuntime la sobreescriben. */
+  handlePointerDown(_x: number, _y: number) {}
+
   protected isDown(code: string) {
     return !!this.keys[code];
   }

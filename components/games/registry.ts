@@ -46,6 +46,16 @@ export const GAME_RUNTIMES: Record<string, GameRuntime> = {
       return new TetrisEngine(ctx, callbacks);
     },
   },
+  arkanoid: {
+    width: 800,
+    height: 600,
+    capturedKeys: ["ArrowLeft", "ArrowRight"],
+    pointer: true,
+    loadEngine: async (ctx, callbacks) => {
+      const { ArkanoidEngine } = await import("@/components/games/arkanoid/engine");
+      return new ArkanoidEngine(ctx, callbacks);
+    },
+  },
 };
 
 export function getGameRuntime(id: string): GameRuntime | undefined {

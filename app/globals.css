@@ -828,6 +828,39 @@ a {
   text-shadow: 0 0 8px var(--cyan);
 }
 
+.cover-arkanoid {
+  background: radial-gradient(circle at 50% 12%, #2a0018, #0a0a12);
+}
+.cover-arkanoid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(var(--magenta), var(--magenta)) 8% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--yellow), var(--yellow)) 26% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) 62% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--green), var(--green)) 80% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--yellow), var(--yellow)) 8% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--magenta), var(--magenta)) 44% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) 62% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--magenta), var(--magenta)) 8% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--green), var(--green)) 26% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--yellow), var(--yellow)) 62% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--cyan), var(--cyan)) 80% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--magenta), var(--magenta)) 38% 82% / 24% 6% no-repeat;
+  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.4));
+  image-rendering: pixelated;
+}
+.cover-arkanoid::before {
+  content: "●";
+  position: absolute;
+  left: 46%;
+  top: 66%;
+  color: var(--magenta);
+  font-size: 16px;
+  text-shadow: 0 0 8px var(--magenta);
+}
+
 .cover-rana {
   background: linear-gradient(180deg, #001f2a, #0a0a18);
 }
