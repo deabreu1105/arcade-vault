@@ -13,3 +13,19 @@ export type Game = {
 };
 
 export const CATS = ["TODOS", "ARCADE", "PUZZLE", "SHOOTER", "VERSUS"] as const;
+
+export const GAME_CATEGORIES: GameCategory[] = ["ARCADE", "PUZZLE", "SHOOTER", "VERSUS"];
+
+export const GAME_COLORS: Game["color"][] = ["cyan", "magenta", "yellow", "green"];
+
+export const GAME_COVERS = [
+  "cover-asteroides",
+  "cover-bricks",
+  "cover-duelo",
+  "cover-glot",
+  "cover-invaders",
+  "cover-rana",
+  "cover-rocas",
+  "cover-snake",
+  "cover-tetro",
+] as const;
