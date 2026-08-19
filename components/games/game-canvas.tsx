@@ -17,8 +17,6 @@ export type GameCanvasProps = EngineCallbacks & {
   capturedKeys: string[];
   /** Habilita el mapeo de mouse a coordenadas lógicas del canvas (para juegos que usan puntero). */
   pointer?: boolean;
-  onPointerMove?: (x: number, y: number) => void;
-  onPointerDown?: (x: number, y: number) => void;
   /** Instancia el motor concreto del juego. Se llama una sola vez, al montar. */
   loadEngine: (
     ctx: CanvasRenderingContext2D,
@@ -41,8 +39,6 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
     height,
     capturedKeys,
     pointer,
-    onPointerMove,
-    onPointerDown,
     loadEngine,
     onScoreChange,
     onLivesChange,
@@ -102,11 +98,11 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
       };
       const handlePointerMove = (e: MouseEvent) => {
         const { x, y } = toLogical(e);
-        onPointerMove?.(x, y);
+        engine.handlePointerMove(x, y);
       };
       const handlePointerDown = (e: MouseEvent) => {
         const { x, y } = toLogical(e);
-        onPointerDown?.(x, y);
+        engine.handlePointerDown(x, y);
       };
       if (pointer) {
         canvas.addEventListener("mousemove", handlePointerMove);

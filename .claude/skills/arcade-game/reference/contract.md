@@ -70,7 +70,10 @@ It keeps the canvas at its logical `width`/`height` resolution and scales it by 
 does; anything else gets bars.
 
 If `pointer: true` is set, mouse coordinates are translated from client space to your canvas's
-logical space before reaching `onPointerMove`/`onPointerDown` — you never do that math yourself.
+logical space and forwarded directly to your engine's `handlePointerMove(x, y)` /
+`handlePointerDown(x, y)` — the same way keyboard input reaches `handleKeyDown`/`handleKeyUp`. You
+never do that coordinate math yourself; just override the two methods (both are no-ops on
+`ArcadeEngine` by default) in your engine subclass.
 
 ## `GAME_RUNTIMES` (`components/games/registry.ts`)
 

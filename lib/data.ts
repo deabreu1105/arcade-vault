@@ -19,6 +19,7 @@ export const GAME_CATEGORIES: GameCategory[] = ["ARCADE", "PUZZLE", "SHOOTER", "
 export const GAME_COLORS: Game["color"][] = ["cyan", "magenta", "yellow", "green"];
 
 export const GAME_COVERS = [
+  "cover-arkanoid",
   "cover-asteroides",
   "cover-bricks",
   "cover-duelo",
