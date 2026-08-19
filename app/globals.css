@@ -698,6 +698,36 @@ a {
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
 }
 
+.cover-snake-real {
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 255, 136, 0.1) 0 1px, transparent 1px 22px),
+    repeating-linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0 1px, transparent 1px 22px),
+    linear-gradient(180deg, #04180f, #020805);
+}
+.cover-snake-real::after {
+  content: "";
+  position: absolute;
+  inset: 28% 14% 16% 14%;
+  background:
+    linear-gradient(#00b869, #00b869) 0% 76% / 20% 22% no-repeat,
+    linear-gradient(#00b869, #00b869) 24% 76% / 20% 22% no-repeat,
+    linear-gradient(var(--green), var(--green)) 48% 76% / 20% 22% no-repeat,
+    linear-gradient(var(--green), var(--green)) 48% 50% / 20% 22% no-repeat,
+    linear-gradient(#baffe3, #baffe3) 48% 24% / 20% 22% no-repeat,
+    linear-gradient(#baffe3, #baffe3) 48% 0% / 20% 22% no-repeat;
+  filter: drop-shadow(0 0 7px rgba(0, 255, 136, 0.55));
+  image-rendering: pixelated;
+}
+.cover-snake-real::before {
+  content: "●";
+  position: absolute;
+  left: 62%;
+  top: 20%;
+  color: #ff5a36;
+  font-size: 18px;
+  text-shadow: 0 0 8px #ff5a36;
+}
+
 .cover-glot {
   background: radial-gradient(circle at 50% 50%, #1a002a, #0a0a18);
 }

@@ -28,6 +28,7 @@ export const GAME_COVERS = [
   "cover-rana",
   "cover-rocas",
   "cover-snake",
+  "cover-snake-real",
   "cover-tetris",
   "cover-tetro",
 ] as const;
