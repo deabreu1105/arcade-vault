@@ -4,6 +4,7 @@
 // de la siguiente pieza, en la franja lateral derecha del canvas (ver reference/porting.md).
 
 import { ArcadeEngine, type EngineCallbacks } from "@/components/games/engine-base";
+import { alpha } from "@/lib/skins";
 
 export type { EngineCallbacks };
 
@@ -17,6 +18,8 @@ export const PANEL_WIDTH = 100;
 export const ENGINE_WIDTH = BOARD_WIDTH + PANEL_WIDTH; // 400
 export const ENGINE_HEIGHT = BOARD_HEIGHT; // 600
 
+// Tabla de fallback: los ocho colores que Tetris tuvo siempre. Con un skin activo cada índice se
+// lee de `palette.ramp`, que también es de ocho; con `clasico` gana este array.
 const COLORS = [
   null,
   "#4dd0e1", // I - cian
@@ -295,20 +298,44 @@ export class TetrisEngine extends ArcadeEngine {
     }
   }
 
-  private drawCell(px: number, py: number, colorIndex: number, size: number, alpha = 1) {
+  /**
+   * Color de la pieza `index`. `COLORS` va de 1 a 8 con un hueco en 0 y `ramp` es de ocho, así que
+   * el índice se corre en uno para leerla. Sin `ramp` — el caso de `clasico` — gana el literal.
+   */
+  private pieceColor(index: number): string {
+    return this.palette.ramp?.[index - 1] ?? (COLORS[index] as string);
+  }
+
+  /**
+   * Halo detrás de un bloque. Tetris nunca dibujó sombra, así que solo se pinta cuando el skin
+   * pide más brillo que el neutro: con `clasico` (glow 1) y con `retro` (glow 0) no hace nada y
+   * el tablero sale exactamente como siempre.
+   */
+  private applyGlow(color: string) {
+    const glow = this.palette.glow ?? 1;
+    if (glow <= 1) return;
+    this.ctx.shadowColor = color;
+    this.ctx.shadowBlur = 4 * glow;
+  }
+
+  // `cellAlpha` y no `alpha`: el nombre lo ocupa el helper que importamos de lib/skins.
+  private drawCell(px: number, py: number, colorIndex: number, size: number, cellAlpha = 1) {
     if (!colorIndex) return;
     const ctx = this.ctx;
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = COLORS[colorIndex] as string;
+    const color = this.pieceColor(colorIndex);
+    ctx.globalAlpha = cellAlpha;
+    ctx.fillStyle = color;
+    this.applyGlow(color);
     ctx.fillRect(px + 1, py + 1, size - 2, size - 2);
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = alpha(this.palette.ink ?? "#fff", 0.12);
     ctx.fillRect(px + 1, py + 1, size - 2, 4);
     ctx.globalAlpha = 1;
   }
 
   private drawBoard() {
     const ctx = this.ctx;
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.strokeStyle = alpha(this.palette.grid ?? "#fff", 0.05);
     ctx.lineWidth = 0.5;
     for (let c = 1; c < COLS; c++) {
       ctx.beginPath();
@@ -352,11 +379,11 @@ export class TetrisEngine extends ArcadeEngine {
     const originY = 30;
     const boxSize = 60;
 
-    ctx.strokeStyle = "rgba(255,255,255,0.15)";
+    ctx.strokeStyle = alpha(this.palette.grid ?? "#fff", 0.15);
     ctx.lineWidth = 1;
     ctx.strokeRect(originX, originY, boxSize, boxSize);
 
-    ctx.fillStyle = "rgba(255,255,255,0.4)";
+    ctx.fillStyle = alpha(this.palette.ink ?? "#fff", 0.4);
     ctx.font = "10px monospace";
     ctx.textAlign = "left";
     ctx.fillText("NEXT", originX, originY - 8);
@@ -374,12 +401,12 @@ export class TetrisEngine extends ArcadeEngine {
 
   protected draw() {
     const ctx = this.ctx;
-    ctx.fillStyle = "#0a0a12";
+    ctx.fillStyle = this.palette.bg ?? "#0a0a12";
     ctx.fillRect(0, 0, ENGINE_WIDTH, ENGINE_HEIGHT);
 
     this.drawBoard();
 
-    ctx.strokeStyle = "rgba(255,255,255,0.08)";
+    ctx.strokeStyle = alpha(this.palette.grid ?? "#fff", 0.08);
     ctx.beginPath();
     ctx.moveTo(BOARD_WIDTH, 0);
     ctx.lineTo(BOARD_WIDTH, ENGINE_HEIGHT);

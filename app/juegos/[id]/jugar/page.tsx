@@ -6,6 +6,7 @@ import type { Game } from "@/lib/data";
 import { useAuth } from "@/components/auth-provider";
 import { GameCanvas, type GameCanvasHandle } from "@/components/games/game-canvas";
 import { getGameRuntime } from "@/components/games/registry";
+import { SkinSelector } from "@/components/games/skin-selector";
 import { getGameForPlay, saveRealScoreAction } from "./actions";
 
 export default function GamePlayerPage() {
@@ -120,6 +121,9 @@ export default function GamePlayerPage() {
           </div>
         </div>
         <div className="hud-actions">
+          {/* Solo en juegos con motor: los decorativos muestran la simulación, que no cambia
+              con el skin. */}
+          {runtime && <SkinSelector />}
           <button className="btn yellow" onClick={togglePause}>
             {paused ? "REANUDAR" : "PAUSA"}
           </button>

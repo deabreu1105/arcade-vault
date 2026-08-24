@@ -26,6 +26,36 @@
   --color-foreground: var(--ink);
 }
 
+/* ===== skins de los juegos reales =====
+   Estos tokens los consumen SOLO los covers de juegos con motor. Los tokens globales de arriba
+   (--cyan, --magenta, --yellow, --green) quedan intactos a propósito: hay 75 usos de var(--cyan)
+   en el sitio, y redefinirlos acá repintaría navbar, botones y home.
+
+   `clasico` no aparece: es la ausencia de estos tokens. Cada cover escribe
+   `var(--skin-rol, <su literal de siempre>)`, así que sin bloque activo el fallback gana y el
+   cover sale idéntico a como salía antes de que existieran los skins. Es el mismo patrón que usan
+   los motores con `this.palette.rol ?? "<literal>"`.
+
+   Los valores tienen que coincidir con SKINS de lib/skins.ts; `npm run skins:check` lo verifica. */
+
+[data-skin="neon"] {
+  --skin-bg: #05010d;
+  --skin-primary: #5cfbff;
+  --skin-secondary: #c98bff;
+  --skin-accent: #ff4fae;
+  --skin-ink: #eafcff;
+  --skin-grid: rgba(124, 92, 255, 0.16);
+}
+
+[data-skin="retro"] {
+  --skin-bg: #0c0803;
+  --skin-primary: #ffc247;
+  --skin-secondary: #d1892a;
+  --skin-accent: #fff0c2;
+  --skin-ink: #ffdc94;
+  --skin-grid: rgba(255, 176, 0, 0.1);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -698,24 +728,38 @@ a {
   filter: drop-shadow(0 0 6px rgba(0, 255, 136, 0.6));
 }
 
+/* El cuerpo va con --skin-secondary y la cabeza con --skin-primary, el mismo reparto que hace el
+   motor; la fruta es --skin-accent. Los dos tonos de cuerpo comparten rol y solo difieren en su
+   fallback, así que en `clasico` conservan sus dos verdes de siempre. */
 .cover-snake-real {
   background:
-    repeating-linear-gradient(0deg, rgba(0, 255, 136, 0.1) 0 1px, transparent 1px 22px),
-    repeating-linear-gradient(90deg, rgba(0, 255, 136, 0.1) 0 1px, transparent 1px 22px),
-    linear-gradient(180deg, #04180f, #020805);
+    repeating-linear-gradient(
+      0deg,
+      var(--skin-grid, rgba(0, 255, 136, 0.1)) 0 1px,
+      transparent 1px 22px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--skin-grid, rgba(0, 255, 136, 0.1)) 0 1px,
+      transparent 1px 22px
+    ),
+    linear-gradient(180deg, var(--skin-bg, #04180f), #020805);
 }
 .cover-snake-real::after {
   content: "";
   position: absolute;
   inset: 28% 14% 16% 14%;
+  --snake-body: var(--skin-secondary, #00b869);
+  --snake-tail: var(--skin-secondary, var(--green));
+  --snake-head: var(--skin-primary, #baffe3);
   background:
-    linear-gradient(#00b869, #00b869) 0% 76% / 20% 22% no-repeat,
-    linear-gradient(#00b869, #00b869) 24% 76% / 20% 22% no-repeat,
-    linear-gradient(var(--green), var(--green)) 48% 76% / 20% 22% no-repeat,
-    linear-gradient(var(--green), var(--green)) 48% 50% / 20% 22% no-repeat,
-    linear-gradient(#baffe3, #baffe3) 48% 24% / 20% 22% no-repeat,
-    linear-gradient(#baffe3, #baffe3) 48% 0% / 20% 22% no-repeat;
-  filter: drop-shadow(0 0 7px rgba(0, 255, 136, 0.55));
+    linear-gradient(var(--snake-body), var(--snake-body)) 0% 76% / 20% 22% no-repeat,
+    linear-gradient(var(--snake-body), var(--snake-body)) 24% 76% / 20% 22% no-repeat,
+    linear-gradient(var(--snake-tail), var(--snake-tail)) 48% 76% / 20% 22% no-repeat,
+    linear-gradient(var(--snake-tail), var(--snake-tail)) 48% 50% / 20% 22% no-repeat,
+    linear-gradient(var(--snake-head), var(--snake-head)) 48% 24% / 20% 22% no-repeat,
+    linear-gradient(var(--snake-head), var(--snake-head)) 48% 0% / 20% 22% no-repeat;
+  filter: drop-shadow(0 0 7px var(--skin-primary, rgba(0, 255, 136, 0.55)));
   image-rendering: pixelated;
 }
 .cover-snake-real::before {
@@ -723,9 +767,9 @@ a {
   position: absolute;
   left: 62%;
   top: 20%;
-  color: #ff5a36;
+  color: var(--skin-accent, #ff5a36);
   font-size: 18px;
-  text-shadow: 0 0 8px #ff5a36;
+  text-shadow: 0 0 8px var(--skin-accent, #ff5a36);
 }
 
 .cover-glot {
@@ -799,52 +843,65 @@ a {
   text-shadow: 0 0 8px var(--yellow);
 }
 
+/* Plantilla de cover tokenizado. Cada color lleva como fallback el literal que tenía antes de
+   los skins, así que con `clasico` — donde ningún token --skin-* está definido — este bloque
+   rinde exactamente igual que siempre. Las tres rocas comparten --skin-secondary y solo difieren
+   en su fallback: en clásico conservan sus tres grises, y bajo un skin toman un tono único. */
 .cover-asteroides {
-  background: radial-gradient(circle at 50% 50%, #001a2a, #000);
+  /* El centro va con --skin-grid y no con --skin-secondary: es un tinte de ambiente, y un rol de
+     saturación plena acá inunda la tarjeta y se traga las rocas. `grid` es el rol tenue. */
+  background: radial-gradient(circle at 50% 50%, var(--skin-grid, #001a2a), var(--skin-bg, #000));
 }
 .cover-asteroides::after {
   content: "";
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 28% 68%, #7a8a90 0 20px, transparent 21px),
-    radial-gradient(circle at 80% 28%, #9aa8ac 0 15px, transparent 16px),
-    radial-gradient(circle at 65% 78%, #6c7a80 0 11px, transparent 12px),
-    radial-gradient(circle at 15% 20%, var(--cyan) 0 2px, transparent 3px),
-    radial-gradient(circle at 90% 80%, var(--cyan) 0 2px, transparent 3px),
-    radial-gradient(circle at 45% 12%, var(--cyan) 0 2px, transparent 3px);
+    radial-gradient(circle at 28% 68%, var(--skin-secondary, #7a8a90) 0 20px, transparent 21px),
+    radial-gradient(circle at 80% 28%, var(--skin-secondary, #9aa8ac) 0 15px, transparent 16px),
+    radial-gradient(circle at 65% 78%, var(--skin-secondary, #6c7a80) 0 11px, transparent 12px),
+    radial-gradient(circle at 15% 20%, var(--skin-ink, var(--cyan)) 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 80%, var(--skin-ink, var(--cyan)) 0 2px, transparent 3px),
+    radial-gradient(circle at 45% 12%, var(--skin-ink, var(--cyan)) 0 2px, transparent 3px);
 }
 .cover-asteroides::before {
   content: "▲";
   position: absolute;
   left: 46%;
   top: 42%;
-  color: var(--cyan);
+  color: var(--skin-primary, var(--cyan));
   font-size: 22px;
-  text-shadow: 0 0 8px var(--cyan);
+  text-shadow: 0 0 8px var(--skin-primary, var(--cyan));
 }
 
+/* Los tres tonos del mosaico son las tres piezas del cover, y el motor pinta las suyas con
+   `ramp`. En CSS no hay token de ramp, así que los tres tonos toman primary/secondary/accent
+   conservando el orden de luminancia de hoy: el más brillante comparte rol con el ícono, tal como
+   hoy comparten var(--cyan). */
 .cover-tetris {
-  background: radial-gradient(circle at 50% 15%, #003844, #000);
+  background: radial-gradient(circle at 50% 15%, var(--skin-grid, #003844), var(--skin-bg, #000));
 }
 .cover-tetris::after {
   content: "";
   position: absolute;
   inset: 46% 16% 12% 16%;
+  --tetris-a: var(--skin-primary, var(--cyan));
+  --tetris-b: var(--skin-secondary, #0aa8c0);
+  --tetris-c: var(--skin-accent, #0a5a6e);
   background:
-    linear-gradient(var(--cyan), var(--cyan)) 0% 0% / 22% 28% no-repeat,
-    linear-gradient(#0aa8c0, #0aa8c0) 26% 0% / 22% 28% no-repeat,
-    linear-gradient(#0a5a6e, #0a5a6e) 52% 0% / 22% 28% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 78% 0% / 22% 28% no-repeat,
-    linear-gradient(#0a5a6e, #0a5a6e) 0% 36% / 22% 28% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 26% 36% / 22% 28% no-repeat,
-    linear-gradient(#0aa8c0, #0aa8c0) 52% 36% / 22% 28% no-repeat,
-    linear-gradient(#0a5a6e, #0a5a6e) 78% 36% / 22% 28% no-repeat,
-    linear-gradient(#0aa8c0, #0aa8c0) 0% 72% / 22% 28% no-repeat,
-    linear-gradient(#0a5a6e, #0a5a6e) 26% 72% / 22% 28% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 52% 72% / 22% 28% no-repeat,
-    linear-gradient(#0aa8c0, #0aa8c0) 78% 72% / 22% 28% no-repeat;
-  filter: drop-shadow(0 0 8px rgba(0, 245, 255, 0.35));
+    linear-gradient(var(--tetris-a), var(--tetris-a)) 0% 0% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-b), var(--tetris-b)) 26% 0% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-c), var(--tetris-c)) 52% 0% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-a), var(--tetris-a)) 78% 0% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-c), var(--tetris-c)) 0% 36% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-a), var(--tetris-a)) 26% 36% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-b), var(--tetris-b)) 52% 36% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-c), var(--tetris-c)) 78% 36% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-b), var(--tetris-b)) 0% 72% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-c), var(--tetris-c)) 26% 72% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-a), var(--tetris-a)) 52% 72% / 22% 28% no-repeat,
+    linear-gradient(var(--tetris-b), var(--tetris-b)) 78% 72% / 22% 28% no-repeat;
+  filter: drop-shadow(0 0 8px var(--skin-primary, rgba(0, 245, 255, 0.35)));
   image-rendering: pixelated;
 }
 .cover-tetris::before {
@@ -852,33 +909,43 @@ a {
   position: absolute;
   left: 42%;
   top: 16%;
-  color: var(--cyan);
+  color: var(--skin-primary, var(--cyan));
   font-size: 20px;
   letter-spacing: 4px;
-  text-shadow: 0 0 8px var(--cyan);
+  text-shadow: 0 0 8px var(--skin-primary, var(--cyan));
 }
 
+/* La pala y la bola llevan --skin-primary porque son lo que el jugador controla, igual que en el
+   motor; los cuatro tonos de ladrillo se reparten los otros tres roles cromáticos más `ink`. */
 .cover-arkanoid {
-  background: radial-gradient(circle at 50% 12%, #2a0018, #0a0a12);
+  background: radial-gradient(
+    circle at 50% 12%,
+    var(--skin-grid, #2a0018),
+    var(--skin-bg, #0a0a12)
+  );
 }
 .cover-arkanoid::after {
   content: "";
   position: absolute;
   inset: 0;
+  --ark-a: var(--skin-primary, var(--magenta));
+  --ark-b: var(--skin-accent, var(--yellow));
+  --ark-c: var(--skin-secondary, var(--cyan));
+  --ark-d: var(--skin-ink, var(--green));
   background:
-    linear-gradient(var(--magenta), var(--magenta)) 8% 14% / 16% 9% no-repeat,
-    linear-gradient(var(--yellow), var(--yellow)) 26% 14% / 16% 9% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 62% 14% / 16% 9% no-repeat,
-    linear-gradient(var(--green), var(--green)) 80% 14% / 16% 9% no-repeat,
-    linear-gradient(var(--yellow), var(--yellow)) 8% 25% / 16% 9% no-repeat,
-    linear-gradient(var(--magenta), var(--magenta)) 44% 25% / 16% 9% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 62% 25% / 16% 9% no-repeat,
-    linear-gradient(var(--magenta), var(--magenta)) 8% 36% / 16% 9% no-repeat,
-    linear-gradient(var(--green), var(--green)) 26% 36% / 16% 9% no-repeat,
-    linear-gradient(var(--yellow), var(--yellow)) 62% 36% / 16% 9% no-repeat,
-    linear-gradient(var(--cyan), var(--cyan)) 80% 36% / 16% 9% no-repeat,
-    linear-gradient(var(--magenta), var(--magenta)) 38% 82% / 24% 6% no-repeat;
-  filter: drop-shadow(0 0 8px rgba(255, 0, 110, 0.4));
+    linear-gradient(var(--ark-a), var(--ark-a)) 8% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-b), var(--ark-b)) 26% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-c), var(--ark-c)) 62% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-d), var(--ark-d)) 80% 14% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-b), var(--ark-b)) 8% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-a), var(--ark-a)) 44% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-c), var(--ark-c)) 62% 25% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-a), var(--ark-a)) 8% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-d), var(--ark-d)) 26% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-b), var(--ark-b)) 62% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-c), var(--ark-c)) 80% 36% / 16% 9% no-repeat,
+    linear-gradient(var(--ark-a), var(--ark-a)) 38% 82% / 24% 6% no-repeat;
+  filter: drop-shadow(0 0 8px var(--skin-primary, rgba(255, 0, 110, 0.4)));
   image-rendering: pixelated;
 }
 .cover-arkanoid::before {
@@ -886,9 +953,9 @@ a {
   position: absolute;
   left: 46%;
   top: 66%;
-  color: var(--magenta);
+  color: var(--skin-primary, var(--magenta));
   font-size: 16px;
-  text-shadow: 0 0 8px var(--magenta);
+  text-shadow: 0 0 8px var(--skin-primary, var(--magenta));
 }
 
 .cover-rana {
@@ -1103,6 +1170,9 @@ a {
 .hud-actions {
   display: flex;
   gap: 10px;
+  /* El selector de skin es más alto que los botones (lleva su propia etiqueta encima), así que
+     los alinea por abajo. Sin él en la fila esto es un no-op: los botones ya ocupaban todo el alto. */
+  align-items: flex-end;
 }
 
 .crt {
@@ -1126,7 +1196,10 @@ a {
 .crt-screen {
   position: relative;
   aspect-ratio: 4 / 3;
-  background: #000;
+  /* Sigue al fondo del skin. El canvas conserva su resolución lógica y queda pillarboxed dentro
+     de la pantalla; si los dos fondos no coinciden, el borde del canvas se ve como un rectángulo
+     más claro. Con `clasico` el token no existe y gana el #000 de siempre. */
+  background: var(--skin-bg, #000);
   border-radius: 12px / 28px;
   overflow: hidden;
   box-shadow:
@@ -1249,6 +1322,103 @@ a {
 @keyframes drift {
   50% {
     transform: translate(20px, 10px);
+  }
+}
+
+/* ----- selector de skin -----
+   Lee como la placa de servicio del gabinete: tres posiciones silkscreen y un punto de fósforo
+   encendido bajo la activa, tomando prestado el vocabulario del .led de .crt-bottom. Cada posición
+   se pinta con su propia paleta, así que la tira de muestras previsualiza lo que hace. */
+.skin-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.skin-switch-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--ink-faint);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+.skin-switch-track {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  background: var(--bg-3);
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+}
+.skin-switch-option {
+  --skin-option-tint: var(--ink-faint);
+  position: relative;
+  padding: 9px 12px 13px;
+  border: 0;
+  border-left: 1px solid var(--line-2);
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    text-shadow 160ms ease;
+}
+.skin-switch-option:first-child {
+  border-left: 0;
+}
+
+/* El punto de fósforo: apagado en las posiciones inactivas, encendido bajo la elegida. */
+.skin-switch-option::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  opacity: 0.35;
+  transition:
+    background 160ms ease,
+    box-shadow 160ms ease,
+    opacity 160ms ease;
+}
+
+.skin-switch-option[data-skin-option="clasico"] {
+  --skin-option-tint: var(--cyan);
+}
+.skin-switch-option[data-skin-option="neon"] {
+  --skin-option-tint: #ff4fae;
+}
+.skin-switch-option[data-skin-option="retro"] {
+  --skin-option-tint: #ffc247;
+}
+
+.skin-switch-option:hover {
+  color: var(--ink-dim);
+}
+.skin-switch-option[aria-checked="true"] {
+  color: var(--skin-option-tint);
+  text-shadow: 0 0 6px var(--skin-option-tint);
+}
+.skin-switch-option[aria-checked="true"]::after {
+  background: var(--skin-option-tint);
+  opacity: 1;
+  box-shadow: 0 0 6px var(--skin-option-tint);
+}
+.skin-switch-option:focus-visible {
+  outline: 1px solid var(--skin-option-tint);
+  outline-offset: -3px;
+  color: var(--skin-option-tint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skin-switch-option,
+  .skin-switch-option::after {
+    transition: none;
   }
 }
 

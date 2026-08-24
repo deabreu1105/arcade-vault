@@ -2,6 +2,7 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { ArcadeEngine, EngineCallbacks } from "@/components/games/engine-base";
+import { useSkin } from "@/components/skin-provider";
 
 export type GameCanvasHandle = {
   pause: () => void;
@@ -50,6 +51,20 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<ArcadeEngine | null>(null);
 
+  // `loadEngine` es un import() dinámico, así que el motor resuelve bastante después del primer
+  // render. La ref garantiza que el .then() de abajo aplique el skin vigente y no el que estaba
+  // cuando se montó el efecto, que captura su closure una sola vez.
+  const { palette } = useSkin();
+  const paletteRef = useRef(palette);
+  paletteRef.current = palette;
+
+  // Efecto aparte del que monta el motor, a propósito: agregar `palette` a las dependencias de
+  // aquél lo remontaría y reiniciaría la partida en cada cambio de skin. Acá solo se repinta,
+  // porque draw() corre en cada frame y toma la paleta nueva en el siguiente.
+  useEffect(() => {
+    engineRef.current?.setPalette(palette);
+  }, [palette]);
+
   useImperativeHandle(ref, () => ({
     pause: () => engineRef.current?.pause(),
     resume: () => engineRef.current?.resume(),
@@ -76,6 +91,8 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
 
       const capturedSet = new Set(capturedKeys);
       engineRef.current = engine;
+      // Antes de start(), para que el primer frame ya salga con el skin correcto.
+      engine.setPalette(paletteRef.current);
       engine.start();
 
       const handleKeyDown = (e: KeyboardEvent) => {

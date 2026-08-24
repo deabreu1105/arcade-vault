@@ -75,6 +75,9 @@ la pantalla de Jugador les muestra la simulación decorativa porque no tienen en
 
 ## Cómo se agrega un juego real
 
+Para decidir **cuál** agregar, el agente `game-planner` evalúa candidatos y deja su historial en
+`references/game-proposals.md`. Para agregarlo:
+
 `/arcade-game <nombre|carpeta>` cubre el flujo completo: spec → migración en `games` → cover
 (`.cover-<id>` en `app/globals.css` + entrada en `GAME_COVERS` de `lib/data.ts`) → motor en
 `components/games/<id>/engine.ts` extendiendo `ArcadeEngine` → entrada en `GAME_RUNTIMES` →
