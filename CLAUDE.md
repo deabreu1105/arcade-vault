@@ -1,130 +1,171 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Este archivo le da a Claude Code (claude.ai/code) instrucciones para trabajar en este repositorio.
 
 @AGENTS.md
 
-## Project
+## Proyecto
 
-Arcade Vault — a platform for playing arcade games online and competing for the highest score.
-Next.js 16 (App Router) + TypeScript + Tailwind v4 + ESLint 9 + Prettier, with Supabase (auth,
-Postgres) and Resend (contact email). Four games are real and playable (Asteroides, Tetris,
-Arkanoid, Snake); any other catalog row still renders the decorative simulation.
+Arcade Vault — una plataforma para jugar juegos arcade en línea y competir por el puntaje más alto.
+Next.js 16 (App Router) + TypeScript + Tailwind v4 + ESLint 9 + Prettier, con Supabase (auth,
+Postgres) y Resend (email de contacto). Cuatro juegos son reales y jugables (Asteroides, Tetris,
+Arkanoid, Snake); cualquier otra fila del catálogo sigue mostrando la simulación decorativa.
 
-This project follows Spec Driven Design. Every feature starts as a numbered spec in `specs/`
-(Spanish, states `Borrador` → `Aprobado` → `Implementado`), gets approved, and only then is
-implemented. Specs 01–10 are all `Implementado`; read the two most recent before writing a new one.
+Este proyecto sigue Spec Driven Design. Cada funcionalidad empieza como un spec numerado en
+`specs/` (en español, con estados `Borrador` → `Aprobado` → `Implementado`), se aprueba, y solo
+entonces se implementa. Los specs 01–10 están todos `Implementado`; lee los dos más recientes antes
+de escribir uno nuevo.
 
-## Commands
+## Comandos
 
-- `npm run dev` — dev server (Turbopack, per Next.js 16 default)
-- `npm run build` / `npm run start` — production build / run it
-- `npm run lint` — ESLint (flat config in `eslint.config.mjs`, extends `eslint-config-next`)
-- `npm run format` / `npm run format:check` — Prettier over the repo (respects `.prettierignore`,
-  which excludes `.agents/`, `references/`, etc.)
-- `npx tsc --noEmit` — typecheck
+- `npm run dev` — servidor de desarrollo (Turbopack, el predeterminado de Next.js 16)
+- `npm run build` / `npm run start` — build de producción / ejecutarlo
+- `npm run lint` — ESLint (config plana en `eslint.config.mjs`, extiende `eslint-config-next`)
+- `npm run format` / `npm run format:check` — Prettier sobre el repo (respeta `.prettierignore`,
+  que excluye `.agents/`, `references/`, etc.)
+- `npx tsc --noEmit` — chequeo de tipos
+- `npm run skins:check` — verifica las paletas de `lib/skins.ts`: contraste de cada rol contra
+  el fondo de su skin, largo del `ramp`, y que los bloques `[data-skin]` de `app/globals.css` no
+  hayan derivado. Corre con `node --experimental-strip-types`, sin dependencias nuevas.
 
-No test runner is configured. Verification is `tsc --noEmit` + `npm run lint` + a manual pass with
-the Playwright MCP tools.
+No hay test runner configurado. La verificación es `tsc --noEmit` + `npm run lint` + una pasada
+manual con las herramientas MCP de Playwright.
 
-## Agents, skills and commands
+## Agentes, skills y comandos
 
-- `game-planner` (`.claude/agents/game-planner.md`) — subagent that decides **which** game should be
-  built next, and why. Invoke it explicitly ("usa el game-planner"). It reads the catalog, scores
-  candidates against the platform contract, keeps its history in `references/game-proposals.md` so
-  it never re-proposes what was already discarded, and stops at a recommendation — it writes no spec
-  and no code. Its output is the input to `/arcade-game`.
-- `/frontend-design` — **always** use it to create or reshape user interfaces.
-- `/arcade-game <name|folder>` — adds a new real playable game end to end (spec → migration →
-  cover → engine → registry → verification). Use this instead of hand-rolling a game; it encodes
-  the whole platform contract. Lives in `.claude/skills/arcade-game/` with `reference/contract.md`
-  (what must not change), `reference/porting.md` (how to port a vanilla-JS game) and `template.md`
-  (the spec shape this kind of feature uses, derived from `specs/06-asteroides-juego-real.md`).
-- `/spec` and `/spec-impl` — plan a spec first, then implement against it.
-- `/format` (a slash command, `.claude/commands/format.md`) — runs Prettier over the repo plus
-  `eslint --fix` over `app components lib hooks demos`.
+- `game-planner` (`.claude/agents/game-planner.md`) — subagente que decide **cuál** juego debería
+  construirse a continuación, y por qué. Invócalo explícitamente ("usa el game-planner"). Lee el
+  catálogo, puntúa candidatos contra el contrato de la plataforma, mantiene su historial en
+  `references/game-proposals.md` para nunca volver a proponer lo que ya fue descartado, y se
+  detiene en una recomendación — no escribe spec ni código. Su salida es la entrada de
+  `/arcade-game`.
+- `game-jam` (`.claude/agents/game-jam.md`) — subagente que convierte **un tema** en un juego
+  especificado. Invócalo explícitamente con un tema ("usa el game-jam con el tema «el fondo del
+  mar»"). Elige una mecánica que encaje con el tema sin reskinear un motor existente, verifica el
+  catálogo para que el `id`/`color`/`cover` que elige estén realmente libres, y escribe
+  `specs/game-jam/<game-id>/` con un `README.md` más al menos dos specs en `Borrador` —
+  `01-<id>-catalogo-y-cover.md` (fila en `games`, cover CSS, `GAME_COVERS`) y `02-<id>-motor.md`
+  (motor, `GAME_RUNTIMES`, verificación). La división sigue la costura propia de la plataforma: el
+  spec 01 deja el juego visible con la simulación decorativa, el spec 02 lo activa como real. No
+  aplica ninguna migración ni escribe código, así que revisa los specs antes de correr
+  `/arcade-game`.
+- `skin-designer` (`.claude/agents/skin-designer.md`) — subagente que mantiene el invariante de
+  que **todo juego real tenga los tres skins** (`clasico`, `neon`, `retro`) legibles sobre el CRT
+  oscuro. Invócalo explícitamente ("usa el skin-designer"). Audita cada motor de `GAME_RUNTIMES`
+  buscando literales de color sueltos, diseña e implementa las paletas que falten, verifica con
+  `npm run skins:check` más Playwright, y mantiene su historial en `references/skin-audit.md`. No
+  agrega juegos ni aplica migraciones; extiende el sistema que fundó `specs/11-sistema-de-skins.md`.
+- `/frontend-design` — **siempre** úsalo para crear o rediseñar interfaces de usuario.
+- `/arcade-game <nombre|carpeta>` — agrega un nuevo juego real jugable de punta a punta (spec →
+  migración → cover → motor → registro → verificación). Úsalo en vez de armar un juego a mano;
+  encapsula todo el contrato de la plataforma. Vive en `.claude/skills/arcade-game/` con
+  `reference/contract.md` (lo que no debe cambiar), `reference/porting.md` (cómo portar un juego en
+  JS vanilla) y `template.md` (la forma del spec que usa este tipo de funcionalidad, derivada de
+  `specs/06-asteroides-juego-real.md`).
+- `/spec` y `/spec-impl` — planifica un spec primero, y luego implementa contra él.
+- `/format` (un slash command, `.claude/commands/format.md`) — corre Prettier sobre el repo más
+  `eslint --fix` sobre `app components lib hooks demos`.
 
-Only `arcade-game` is written for this repo. `spec`, `spec-impl`, `frontend-design` and `caveman`
-are third-party skills installed with `npx skills@latest add <repo>` (`Klerith/fernando-skills`,
-`anthropics/skills`, `juliusbrussee/caveman`), vendored under `.agents/skills/` and symlinked into
-`.claude/skills/`; `skills-lock.json` pins them. Update them through the CLI, never by editing the
-vendored copies.
+Solo `arcade-game` está escrito para este repo. `spec`, `spec-impl`, `frontend-design` y `caveman`
+son skills de terceros instalados con `npx skills@latest add <repo>` (`Klerith/fernando-skills`,
+`anthropics/skills`, `juliusbrussee/caveman`), vendorizados bajo `.agents/skills/` y enlazados
+simbólicamente en `.claude/skills/`; `skills-lock.json` los fija. Actualízalos a través del CLI,
+nunca editando las copias vendorizadas.
 
-A `PostToolUse` hook (`.claude/hooks/format-and-lint.sh`, wired in `.claude/settings.json`) already
-formats every file you Write/Edit with Prettier and applies `eslint --fix` to JS/TS. Non-autofixable
-ESLint errors come back as a hook error — fix them, don't reformat by hand.
+Un hook `PostToolUse` (`.claude/hooks/format-and-lint.sh`, conectado en `.claude/settings.json`) ya
+formatea cada archivo que escribas/edites con Prettier y aplica `eslint --fix` a JS/TS. Los errores
+de ESLint que no se pueden autocorregir vuelven como un error del hook — corrígelos, no reformatees
+a mano.
 
-## MCP servers
+## Servidores MCP
 
-- **supabase** — the hosted HTTP server declared in `.mcp.json` (project `rcsimffriebjuypildqz`).
-  Schema changes go through `mcp__supabase__apply_migration`, ad-hoc reads through `execute_sql`.
-  There is no local Supabase stack and no `supabase/migrations/` folder; migrations apply straight to
-  the remote project, so treat every one as production.
-- **playwright** — configured outside the repo (user-level, not in `.mcp.json`), used for manual
-  verification of game screens. Save all screenshots in `.playwright-screenshots/` (gitignored).
+- **supabase** — el servidor HTTP hospedado declarado en `.mcp.json` (proyecto
+  `rcsimffriebjuypildqz`). Los cambios de esquema van por `mcp__supabase__apply_migration`, las
+  lecturas ad-hoc por `execute_sql`. No hay stack local de Supabase ni carpeta
+  `supabase/migrations/`; las migraciones se aplican directo al proyecto remoto, así que trata cada
+  una como producción.
+- **playwright** — configurado fuera del repo (a nivel de usuario, no en `.mcp.json`), usado para
+  la verificación manual de las pantallas de juego. Guarda todas las capturas en
+  `.playwright-screenshots/` (ignorado por git).
 
-## Environment
+## Entorno
 
-Copy `.env.template` to `.env.local`: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `SUPABASE_DB_PASSWORD`,
-`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+Copia `.env.template` a `.env.local`: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`,
+`SUPABASE_DB_PASSWORD`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 
-## Architecture
+## Arquitectura
 
-### Routes (`app/`)
+### Rutas (`app/`)
 
-`/` home · `/acerca-de` about + contact form (posts to `app/api/contact/route.ts`, sends via
-Resend) · `/biblioteca` catalog · `/juegos/[id]` detail · `/juegos/[id]/jugar` player screen ·
-`/salon-de-la-fama` leaderboards · `/login` auth · `/admin/juegos` admin CRUD over `games`
-(gated by `profiles.is_admin`). Read `references/implemented-games.md` when you need to know which
-games exist today and how a new one gets added.
+`/` inicio · `/acerca-de` acerca de + formulario de contacto (envía a
+`app/api/contact/route.ts`, que manda por Resend) · `/biblioteca` catálogo · `/juegos/[id]`
+detalle · `/juegos/[id]/jugar` pantalla de juego · `/salon-de-la-fama` tablas de puntajes ·
+`/login` autenticación · `/admin/juegos` CRUD de administración sobre `games` (protegido por
+`profiles.is_admin`). Lee `references/implemented-games.md` cuando necesites saber qué juegos
+existen hoy y cómo se agrega uno nuevo.
 
-Path alias `@/*` maps to the repo root. Styling is Tailwind CSS v4 via `@tailwindcss/postcss`,
-plus a large hand-written CRT/arcade stylesheet in `app/globals.css` (game covers, `.crt-screen`,
-`.game-arena`).
+El alias de ruta `@/*` mapea a la raíz del repo. El estilo es Tailwind CSS v4 vía
+`@tailwindcss/postcss`, más una hoja de estilos CRT/arcade grande y escrita a mano en
+`app/globals.css` (covers de juegos, `.crt-screen`, `.game-arena`).
 
 ### Supabase
 
-- `lib/supabase/{client,server,middleware}.ts` — `@supabase/ssr` clients. Session refresh runs in
-  `proxy.ts` at the repo root (Next.js 16 renamed `middleware.ts` → `proxy.ts`), which delegates to
-  `updateSession`.
-- `lib/supabase/queries.ts` — every read/write, generic by `gameId`. Tables: `games`, `scores`,
-  `profiles` (`username`, `is_admin`).
-- Auth is email + password with a `username` in user metadata; guest mode still works and saves
-  scores under a guest name. `components/auth-provider.tsx` exposes the session client-side.
+- `lib/supabase/{client,server,middleware}.ts` — clientes de `@supabase/ssr`. El refresco de
+  sesión corre en `proxy.ts` en la raíz del repo (Next.js 16 renombró `middleware.ts` →
+  `proxy.ts`), que delega en `updateSession`.
+- `lib/supabase/queries.ts` — cada lectura/escritura, genérica por `gameId`. Tablas: `games`,
+  `scores`, `profiles` (`username`, `is_admin`).
+- La autenticación es email + contraseña con un `username` en los metadatos del usuario; el modo
+  invitado sigue funcionando y guarda puntajes bajo un nombre de invitado.
+  `components/auth-provider.tsx` expone la sesión del lado del cliente.
 
-### Games platform (`components/games/`)
+### Plataforma de juegos (`components/games/`)
 
-The pieces below are generic — a new game touches only the last two:
+Las piezas de abajo son genéricas — un juego nuevo solo toca las dos últimas:
 
-- `engine-base.ts` — `ArcadeEngine`, the abstract base every motor extends. Owns the
-  `requestAnimationFrame` loop, `dt` clamping, pause/resume without a time jump, and the callbacks
-  `onScoreChange` / `onLivesChange` / `onLevelChange` / `onGameOver`. Concrete engines implement
-  `init()`, `update(dt)`, `draw()`.
-- `game-canvas.tsx` — `GameCanvas`, the generic `<canvas>`. Instantiates the engine, captures
-  keyboard (and optional pointer) input with `preventDefault`, letterboxes any aspect ratio inside
-  `.crt-screen`, and exposes `pause`/`resume`/`restart`/`forceGameOver` through a ref.
-- `registry.ts` — `GAME_RUNTIMES: Record<gameId, GameRuntime>` (canvas size, `capturedKeys`,
-  optional `pointer`, a dynamic `loadEngine`, and a `Component` escape hatch for games needing extra
-  DOM). **This is the only thing `app/juegos/[id]/jugar/page.tsx` reads to decide between the real
-  engine and the decorative simulation** — the page never special-cases a game id.
-- `<id>/engine.ts` — one folder per real game: `asteroides`, `tetris`, `arkanoid`, `snake`.
+- `engine-base.ts` — `ArcadeEngine`, la clase base abstracta que extiende cada motor. Es dueña del
+  loop de `requestAnimationFrame`, el clamping de `dt`, pausa/reanudación sin salto de tiempo, y
+  los callbacks `onScoreChange` / `onLivesChange` / `onLevelChange` / `onGameOver`. Los motores
+  concretos implementan `init()`, `update(dt)`, `draw()`.
+- `game-canvas.tsx` — `GameCanvas`, el `<canvas>` genérico. Instancia el motor, captura entrada de
+  teclado (y de puntero, opcional) con `preventDefault`, hace letterbox de cualquier relación de
+  aspecto dentro de `.crt-screen`, y expone `pause`/`resume`/`restart`/`forceGameOver` a través de
+  una ref.
+- `registry.ts` — `GAME_RUNTIMES: Record<gameId, GameRuntime>` (tamaño del canvas,
+  `capturedKeys`, `pointer` opcional, un `loadEngine` dinámico, y una vía de escape `Component`
+  para juegos que necesitan DOM extra). **Esto es lo único que lee
+  `app/juegos/[id]/jugar/page.tsx` para decidir entre el motor real y la simulación decorativa** —
+  la página nunca hace un caso especial para un id de juego.
+- `skins` — `lib/skins.ts` define `SKINS` (`clasico` por defecto, `neon`, `retro`) y el tipo
+  `SkinPalette`, cuyos campos son **todos opcionales**: cada motor lee
+  `this.palette.<rol> ?? "<su literal de siempre>"`, así que `clasico` queda idéntico al código
+  original por construcción. `ArcadeEngine` expone `setPalette()` sin cambiar su firma de
+  constructor, y `GameCanvas` la reaplica en caliente sin reiniciar la partida.
+  `components/skin-provider.tsx` persiste la elección en `localStorage` y la refleja en
+  `data-skin` sobre `<html>`; los covers la consumen con `var(--skin-<rol>, <literal>)`. Los
+  tokens globales `--cyan`/`--magenta`/`--yellow`/`--green` **no** se tocan: el skin llega al
+  canvas y al cover, no al chrome del sitio.
+- `<id>/engine.ts` — una carpeta por cada juego real: `asteroides`, `tetris`, `arkanoid`,
+  `snake`.
 
-Adding a row to `games` makes it appear in Biblioteca, Detalle, Jugador and Salón de la Fama with
-no code change. `lib/supabase/queries.ts`, `app/juegos/[id]/jugar/actions.ts`, `app/biblioteca/**`,
-`app/juegos/[id]/page.tsx` and `app/salon-de-la-fama/**` are already generic — do not touch them for
-a new game. A game's cover is a `.cover-<id>` class in `app/globals.css` **and** an entry in
-`GAME_COVERS` (`lib/data.ts`); skipping the array makes the admin panel reject the cover.
+Agregar una fila a `games` hace que aparezca en Biblioteca, Detalle, Jugador y Salón de la Fama sin
+ningún cambio de código. `lib/supabase/queries.ts`, `app/juegos/[id]/jugar/actions.ts`,
+`app/biblioteca/**`, `app/juegos/[id]/page.tsx` y `app/salon-de-la-fama/**` ya son genéricos — no
+los toques para un juego nuevo. El cover de un juego es una clase `.cover-<id>` en
+`app/globals.css` **y** una entrada en `GAME_COVERS` (`lib/data.ts`); si te saltas el array, el
+panel de administración rechaza el cover.
 
-### Reference material (`references/`, not part of the build)
+### Material de referencia (`references/`, no forma parte del build)
 
-`templates/` — the original JSX/HTML designs each screen was ported from. `started-games/` —
-vanilla-JS games available to port (`/arcade-game` reads these); all three are already ported.
-`source-assets/` — sprites. `implemented-games.md` — the current catalog, game by game.
-`game-proposals.md` — `game-planner`'s memory of what has been proposed, recommended and discarded.
-ESLint/Prettier ignore this tree; it has known errors and must not be linted or "fixed".
+`templates/` — los diseños originales en JSX/HTML de los que se portó cada pantalla.
+`started-games/` — juegos en JS vanilla disponibles para portar (`/arcade-game` los lee); los tres
+ya están portados. `source-assets/` — sprites. `implemented-games.md` — el catálogo actual, juego
+por juego. `game-proposals.md` — la memoria de `game-planner` de lo que se ha propuesto,
+recomendado y descartado. ESLint/Prettier ignoran este árbol; tiene errores conocidos y no debe
+lintearse ni "arreglarse".
 
-### Next.js version
+### Versión de Next.js
 
-Before writing any Next.js code, read the relevant guide under `node_modules/next/dist/docs/` —
-this project pins a Next.js version with breaking changes and conventions that differ from typical
-training data (see AGENTS.md).
+Antes de escribir cualquier código de Next.js, lee la guía correspondiente bajo
+`node_modules/next/dist/docs/` — este proyecto fija una versión de Next.js con cambios que rompen
+compatibilidad y convenciones que difieren de los datos de entrenamiento típicos (ver AGENTS.md).

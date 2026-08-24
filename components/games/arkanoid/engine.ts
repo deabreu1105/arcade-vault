@@ -4,6 +4,7 @@
 
 import { ArcadeEngine, type EngineCallbacks } from "@/components/games/engine-base";
 import { LEVELS, type BlockColor } from "@/components/games/arkanoid/levels";
+import type { SkinPalette } from "@/lib/skins";
 
 export type { EngineCallbacks };
 
@@ -58,6 +59,10 @@ export class ArkanoidEngine extends ArcadeEngine {
 
   private spritesheet: HTMLImageElement | null = null;
   private spritesheetLoaded = false;
+  /** Copia teñida de la hoja. Null con `clasico`, donde se dibuja la hoja original tal cual. */
+  private tintedSheet: HTMLCanvasElement | null = null;
+  /** El `spriteTint` con el que se generó `tintedSheet`, para no reteñir de más. */
+  private tintKey: string | null = null;
   private bounceSound: HTMLAudioElement | null = null;
   private breakSound: HTMLAudioElement | null = null;
 
@@ -67,6 +72,7 @@ export class ArkanoidEngine extends ArcadeEngine {
       const img = new Image();
       img.onload = () => {
         this.spritesheetLoaded = true;
+        this.retint();
       };
       img.onerror = () => {
         this.spritesheetLoaded = false;
@@ -76,6 +82,43 @@ export class ArkanoidEngine extends ArcadeEngine {
       this.bounceSound = new Audio("/games/arkanoid/ball-bounce.mp3");
       this.breakSound = new Audio("/games/arkanoid/break-sound.mp3");
     }
+  }
+
+  /**
+   * Tiñe la hoja completa una sola vez en un canvas fuera de pantalla. La alternativa —
+   * `ctx.filter` antes de cada `drawImage` — fuerza una superficie intermedia por llamada, y este
+   * motor hace del orden de cincuenta a cien por frame; así el costo es una pasada por cambio de
+   * skin y cero por frame.
+   *
+   * Se llama desde los dos caminos posibles, `img.onload` y `setPalette()`, porque cualquiera de
+   * los dos puede llegar primero y cubrir solo uno pierde el tinte en silencio.
+   */
+  private retint() {
+    const img = this.spritesheet;
+    const tint = this.palette.spriteTint;
+    if (!tint) {
+      // `clasico` no tiñe: se dibuja la hoja original, byte a byte como siempre.
+      this.tintedSheet = null;
+      this.tintKey = null;
+      return;
+    }
+    if (!img || !this.spritesheetLoaded) return;
+    if (this.tintKey === tint && this.tintedSheet) return;
+
+    const off = document.createElement("canvas");
+    off.width = img.naturalWidth;
+    off.height = img.naturalHeight;
+    const offCtx = off.getContext("2d");
+    if (!offCtx) return;
+    offCtx.filter = tint;
+    offCtx.drawImage(img, 0, 0);
+    this.tintedSheet = off;
+    this.tintKey = tint;
+  }
+
+  setPalette(palette: SkinPalette) {
+    super.setPalette(palette);
+    this.retint();
   }
 
   private playSound(sound: HTMLAudioElement | null) {
@@ -213,12 +256,29 @@ export class ArkanoidEngine extends ArcadeEngine {
 
   private drawSprite(sprite: Sprite, x: number, y: number, w: number, h: number) {
     if (!this.spritesheetLoaded || !this.spritesheet) return;
-    this.ctx.drawImage(this.spritesheet, sprite.sx, sprite.sy, sprite.sw, sprite.sh, x, y, w, h);
+    const sheet = this.tintedSheet ?? this.spritesheet;
+    this.ctx.drawImage(sheet, sprite.sx, sprite.sy, sprite.sw, sprite.sh, x, y, w, h);
+  }
+
+  /**
+   * Halo alrededor de un sprite. Solo se usa en la pala y en la bola — dos `drawImage` por frame —
+   * y nunca en los bloques, que son hasta cien: una sombra por bloque cuesta una superficie
+   * intermedia cada uno. Con `clasico` (glow 1) y con `retro` (glow 0) no pinta nada, así que este
+   * motor no estrena brillo donde nunca lo tuvo.
+   */
+  private withGlow(color: string, drawFn: () => void) {
+    const glow = this.palette.glow ?? 1;
+    if (glow > 1) {
+      this.ctx.shadowColor = color;
+      this.ctx.shadowBlur = 6 * glow;
+    }
+    drawFn();
+    this.ctx.shadowBlur = 0;
   }
 
   protected draw() {
     const { ctx } = this;
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = this.palette.bg ?? "#000";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
     for (const block of this.blocks) {
@@ -231,7 +291,10 @@ export class ArkanoidEngine extends ArcadeEngine {
       this.drawSprite(EXPLOSION_FRAMES[exp.color][frameIndex], exp.x, exp.y, exp.w, exp.h);
     }
 
-    this.drawSprite(SPRITES.paddle, this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
-    this.drawSprite(SPRITES.ball, this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+    const playerColor = this.palette.primary ?? "#fff";
+    this.withGlow(playerColor, () => {
+      this.drawSprite(SPRITES.paddle, this.paddle.x, this.paddle.y, this.paddle.w, this.paddle.h);
+      this.drawSprite(SPRITES.ball, this.ball.x, this.ball.y, this.ball.w, this.ball.h);
+    });
   }
 }

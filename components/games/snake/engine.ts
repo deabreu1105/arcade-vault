@@ -9,6 +9,7 @@ import {
   randomFruitSprite,
   type SpriteRect,
 } from "@/components/games/snake/sprites";
+import { alpha, type SkinPalette } from "@/lib/skins";
 
 export type { EngineCallbacks };
 
@@ -42,6 +43,10 @@ export class SnakeEngine extends ArcadeEngine {
 
   private image: HTMLImageElement | null = null;
   private imageLoaded = false;
+  /** Copia teñida de la hoja de frutas. Null con `clasico`, que dibuja la original tal cual. */
+  private tintedImage: HTMLCanvasElement | null = null;
+  /** El `spriteTint` con el que se generó `tintedImage`, para no reteñir de más. */
+  private tintKey: string | null = null;
 
   constructor(ctx: CanvasRenderingContext2D, callbacks: EngineCallbacks) {
     super(ctx, callbacks);
@@ -49,6 +54,7 @@ export class SnakeEngine extends ArcadeEngine {
       const img = new Image();
       img.onload = () => {
         this.imageLoaded = true;
+        this.retint();
       };
       img.onerror = () => {
         this.imageLoaded = false;
@@ -56,6 +62,39 @@ export class SnakeEngine extends ArcadeEngine {
       img.src = FRUITS_IMAGE_SRC;
       this.image = img;
     }
+  }
+
+  /**
+   * Tiñe la hoja de frutas una sola vez en un canvas fuera de pantalla, en vez de poner
+   * `ctx.filter` antes del `drawImage` de cada frame. Se llama desde `img.onload` y desde
+   * `setPalette()` porque cualquiera de los dos puede llegar primero.
+   */
+  private retint() {
+    const img = this.image;
+    const tint = this.palette.spriteTint;
+    if (!tint) {
+      // `clasico` no tiñe: la fruta sale con sus colores de siempre.
+      this.tintedImage = null;
+      this.tintKey = null;
+      return;
+    }
+    if (!img || !this.imageLoaded) return;
+    if (this.tintKey === tint && this.tintedImage) return;
+
+    const off = document.createElement("canvas");
+    off.width = img.naturalWidth;
+    off.height = img.naturalHeight;
+    const offCtx = off.getContext("2d");
+    if (!offCtx) return;
+    offCtx.filter = tint;
+    offCtx.drawImage(img, 0, 0);
+    this.tintedImage = off;
+    this.tintKey = tint;
+  }
+
+  setPalette(palette: SkinPalette) {
+    super.setPalette(palette);
+    this.retint();
   }
 
   private isOccupied(col: number, row: number) {
@@ -153,7 +192,7 @@ export class SnakeEngine extends ArcadeEngine {
 
   private drawGrid() {
     const { ctx } = this;
-    ctx.strokeStyle = "rgba(0, 255, 136, 0.08)";
+    ctx.strokeStyle = alpha(this.palette.grid ?? "#00ff88", 0.08);
     ctx.lineWidth = 1;
     for (let i = 1; i < GRID; i++) {
       ctx.beginPath();
@@ -167,12 +206,17 @@ export class SnakeEngine extends ArcadeEngine {
     }
   }
 
+  /**
+   * `glow` es el desenfoque que este motor siempre tuvo; el skin lo multiplica. Con `clasico`
+   * (factor 1) queda igual que siempre y con `retro` (factor 0) la serpiente se apaga y queda
+   * plana, que es justo lo que ese skin busca.
+   */
   private drawSegment(cell: Cell, color: string, glow: number) {
     const { ctx } = this;
     const pad = 2;
     ctx.fillStyle = color;
     ctx.shadowColor = color;
-    ctx.shadowBlur = glow;
+    ctx.shadowBlur = glow * (this.palette.glow ?? 1);
     ctx.beginPath();
     ctx.roundRect(cell.col * CELL + pad, cell.row * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
     ctx.fill();
@@ -181,7 +225,7 @@ export class SnakeEngine extends ArcadeEngine {
 
   protected draw() {
     const { ctx } = this;
-    ctx.fillStyle = "#04140c";
+    ctx.fillStyle = this.palette.bg ?? "#04140c";
     ctx.fillRect(0, 0, WIDTH, HEIGHT);
     this.drawGrid();
 
@@ -189,7 +233,7 @@ export class SnakeEngine extends ArcadeEngine {
       const { sprite } = this.food;
       const pad = 2;
       ctx.drawImage(
-        this.image,
+        this.tintedImage ?? this.image,
         sprite.x,
         sprite.y,
         sprite.w,
@@ -202,8 +246,8 @@ export class SnakeEngine extends ArcadeEngine {
     }
 
     for (let i = this.snake.length - 1; i >= 1; i--) {
-      this.drawSegment(this.snake[i], "#00c46f", 6);
+      this.drawSegment(this.snake[i], this.palette.secondary ?? "#00c46f", 6);
     }
-    if (this.snake[0]) this.drawSegment(this.snake[0], "#baffe3", 10);
+    if (this.snake[0]) this.drawSegment(this.snake[0], this.palette.primary ?? "#baffe3", 10);
   }
 }

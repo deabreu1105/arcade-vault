@@ -3,6 +3,7 @@
 // El andamiaje de loop/pausa/ciclo de vida vive en ArcadeEngine (components/games/engine-base.ts).
 
 import { ArcadeEngine, type EngineCallbacks } from "@/components/games/engine-base";
+import { alpha, type SkinPalette } from "@/lib/skins";
 
 export type { EngineCallbacks };
 
@@ -14,6 +15,18 @@ const dist = (a: { x: number; y: number }, b: { x: number; y: number }) =>
   Math.hypot(a.x - b.x, a.y - b.y);
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 const randInt = (min: number, max: number) => Math.floor(rand(min, max + 1));
+
+/**
+ * Halo neón alrededor de un trazo. Asteroides es vectorial y nunca dibujó sombra, así que solo se
+ * pinta cuando el skin pide más brillo que el neutro: con `clasico` (glow 1) y con `retro`
+ * (glow 0) esta función no hace nada y el dibujo sale exactamente como siempre.
+ */
+function applyGlow(ctx: CanvasRenderingContext2D, palette: SkinPalette, color: string) {
+  const glow = palette.glow ?? 1;
+  if (glow <= 1) return;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 6 * glow;
+}
 
 const POWERUP_DROP_CHANCE = 0.15;
 const POWERUP_DURATION = 5;
@@ -44,11 +57,14 @@ class Bullet {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    ctx.fillStyle = "#fff";
+  draw(ctx: CanvasRenderingContext2D, palette: SkinPalette) {
+    const color = palette.ink ?? "#fff";
+    ctx.fillStyle = color;
+    applyGlow(ctx, palette, color);
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
     ctx.fill();
+    ctx.shadowBlur = 0;
   }
 }
 
@@ -103,11 +119,13 @@ class Asteroid {
     ];
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: SkinPalette) {
+    const color = palette.secondary ?? "#fff";
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rot);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = color;
+    applyGlow(ctx, palette, color);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
     ctx.beginPath();
@@ -144,18 +162,20 @@ class PowerUp {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: SkinPalette) {
     if (this.ttl < 2 && Math.floor(this.ttl * 8) % 2 === 0) return;
+    const color = palette.accent ?? "#0ff";
     const pulse = 0.85 + Math.sin(performance.now() / 150) * 0.15;
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(Math.PI / 4);
-    ctx.strokeStyle = "#0ff";
+    ctx.strokeStyle = color;
+    applyGlow(ctx, palette, color);
     ctx.lineWidth = 2;
     const r = this.radius * pulse;
     ctx.strokeRect(-r, -r, r * 2, r * 2);
     ctx.restore();
-    ctx.fillStyle = "#0ff";
+    ctx.fillStyle = color;
     ctx.font = "bold 12px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -231,14 +251,16 @@ class Ship {
     return [new Bullet(ox, oy, this.angle)];
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
+  draw(ctx: CanvasRenderingContext2D, palette: SkinPalette) {
     if (this.dead) return;
     if (this.invincible > 0 && Math.floor(this.invincible * 8) % 2 === 0) return;
 
+    const color = palette.primary ?? "#fff";
     ctx.save();
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
-    ctx.strokeStyle = "#fff";
+    ctx.strokeStyle = color;
+    applyGlow(ctx, palette, color);
     ctx.lineWidth = 1.5;
     ctx.lineJoin = "round";
 
@@ -255,7 +277,7 @@ class Ship {
       ctx.moveTo(-8, -4);
       ctx.lineTo(-8 - rand(6, 14), 0);
       ctx.lineTo(-8, 4);
-      ctx.strokeStyle = "rgba(255, 130, 0, 0.85)";
+      ctx.strokeStyle = palette.thrust ?? "rgba(255, 130, 0, 0.85)";
       ctx.stroke();
     }
 
@@ -290,9 +312,10 @@ class Particle {
     if (this.ttl <= 0) this.dead = true;
   }
 
-  draw(ctx: CanvasRenderingContext2D) {
-    const alpha = this.ttl / this.life;
-    ctx.strokeStyle = `rgba(255,255,255,${alpha.toFixed(2)})`;
+  draw(ctx: CanvasRenderingContext2D, palette: SkinPalette) {
+    // `fade` y no `alpha`: el nombre lo ocupa el helper que importamos de lib/skins.
+    const fade = this.ttl / this.life;
+    ctx.strokeStyle = alpha(palette.ink ?? "#fff", fade);
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(this.x, this.y);
@@ -445,13 +468,15 @@ export class AsteroidsEngine extends ArcadeEngine {
 
   protected draw() {
     const ctx = this.ctx;
-    ctx.fillStyle = "#000";
+    const palette = this.palette;
+
+    ctx.fillStyle = palette.bg ?? "#000";
     ctx.fillRect(0, 0, ENGINE_WIDTH, ENGINE_HEIGHT);
 
-    this.particles.forEach((p) => p.draw(ctx));
-    this.asteroids.forEach((a) => a.draw(ctx));
-    this.powerUps.forEach((p) => p.draw(ctx));
-    this.bullets.forEach((b) => b.draw(ctx));
-    this.ship.draw(ctx);
+    this.particles.forEach((p) => p.draw(ctx, palette));
+    this.asteroids.forEach((a) => a.draw(ctx, palette));
+    this.powerUps.forEach((p) => p.draw(ctx, palette));
+    this.bullets.forEach((b) => b.draw(ctx, palette));
+    this.ship.draw(ctx, palette);
   }
 }

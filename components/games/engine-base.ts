@@ -3,6 +3,8 @@
 // pausa/reanudación sin saltos de dt, ciclo de vida) para que cada motor concreto (p. ej.
 // components/games/asteroides/engine.ts) solo tenga que implementar su propia lógica de juego.
 
+import { DEFAULT_SKIN, SKINS, type SkinPalette } from "@/lib/skins";
+
 export type EngineCallbacks = {
   onScoreChange: (score: number) => void;
   onLivesChange: (lives: number) => void;
@@ -21,6 +23,13 @@ export type GameState = "playing" | "dead" | "gameover";
 export abstract class ArcadeEngine {
   protected ctx: CanvasRenderingContext2D;
   protected callbacks: EngineCallbacks;
+
+  /**
+   * Paleta del skin activo. Todos sus campos son opcionales: cada motor lee
+   * `this.palette.<rol> ?? "<su literal de siempre>"`, así que con el skin por defecto el dibujo
+   * queda idéntico al original. GameCanvas la actualiza con setPalette().
+   */
+  protected palette: SkinPalette = SKINS[DEFAULT_SKIN];
 
   protected score = 0;
   protected lives = 3;
@@ -53,6 +62,14 @@ export abstract class ArcadeEngine {
   protected abstract update(dt: number): void;
   /** Dibuja el estado actual. Sigue llamándose en pausa (último frame congelado). */
   protected abstract draw(): void;
+
+  /**
+   * Cambia la paleta en caliente. No reinicia nada: `draw()` corre en cada frame, así que el
+   * cambio se ve en el frame siguiente sin tocar la partida en curso.
+   */
+  setPalette(palette: SkinPalette) {
+    this.palette = palette;
+  }
 
   start() {
     this.init();
