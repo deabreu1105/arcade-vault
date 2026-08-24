@@ -27,17 +27,28 @@ implemented. Specs 01–10 are all `Implementado`; read the two most recent befo
 No test runner is configured. Verification is `tsc --noEmit` + `npm run lint` + a manual pass with
 the Playwright MCP tools.
 
-## Skills and commands
+## Agents, skills and commands
 
+- `game-planner` (`.claude/agents/game-planner.md`) — subagent that decides **which** game should be
+  built next, and why. Invoke it explicitly ("usa el game-planner"). It reads the catalog, scores
+  candidates against the platform contract, keeps its history in `references/game-proposals.md` so
+  it never re-proposes what was already discarded, and stops at a recommendation — it writes no spec
+  and no code. Its output is the input to `/arcade-game`.
 - `/frontend-design` — **always** use it to create or reshape user interfaces.
 - `/arcade-game <name|folder>` — adds a new real playable game end to end (spec → migration →
   cover → engine → registry → verification). Use this instead of hand-rolling a game; it encodes
   the whole platform contract. Lives in `.claude/skills/arcade-game/` with `reference/contract.md`
-  (what must not change) and `reference/porting.md` (how to port a vanilla-JS game).
-- `/spec` and `/spec-impl` (from https://github.com/Klerith/fernando-skills, installed via
-  `npx skills@latest add Klerith/fernando-skills`, vendored in `.agents/skills/`) — plan a spec
-  first, then implement against it.
-- `/format` — runs Prettier over the repo plus `eslint --fix` over `app components lib hooks demos`.
+  (what must not change), `reference/porting.md` (how to port a vanilla-JS game) and `template.md`
+  (the spec shape this kind of feature uses, derived from `specs/06-asteroides-juego-real.md`).
+- `/spec` and `/spec-impl` — plan a spec first, then implement against it.
+- `/format` (a slash command, `.claude/commands/format.md`) — runs Prettier over the repo plus
+  `eslint --fix` over `app components lib hooks demos`.
+
+Only `arcade-game` is written for this repo. `spec`, `spec-impl`, `frontend-design` and `caveman`
+are third-party skills installed with `npx skills@latest add <repo>` (`Klerith/fernando-skills`,
+`anthropics/skills`, `juliusbrussee/caveman`), vendored under `.agents/skills/` and symlinked into
+`.claude/skills/`; `skills-lock.json` pins them. Update them through the CLI, never by editing the
+vendored copies.
 
 A `PostToolUse` hook (`.claude/hooks/format-and-lint.sh`, wired in `.claude/settings.json`) already
 formats every file you Write/Edit with Prettier and applies `eslint --fix` to JS/TS. Non-autofixable
@@ -45,11 +56,12 @@ ESLint errors come back as a hook error — fix them, don't reformat by hand.
 
 ## MCP servers
 
-- **supabase** (`.mcp.json`, project `rcsimffriebjuypildqz`) — schema changes go through
-  `mcp__supabase__apply_migration`, ad-hoc reads through `execute_sql`. There is no local Supabase
-  stack; migrations apply to the remote project.
-- **playwright** — manual verification of game screens. Save all screenshots in
-  `.playwright-screenshots/`.
+- **supabase** — the hosted HTTP server declared in `.mcp.json` (project `rcsimffriebjuypildqz`).
+  Schema changes go through `mcp__supabase__apply_migration`, ad-hoc reads through `execute_sql`.
+  There is no local Supabase stack and no `supabase/migrations/` folder; migrations apply straight to
+  the remote project, so treat every one as production.
+- **playwright** — configured outside the repo (user-level, not in `.mcp.json`), used for manual
+  verification of game screens. Save all screenshots in `.playwright-screenshots/` (gitignored).
 
 ## Environment
 
@@ -63,8 +75,8 @@ Copy `.env.template` to `.env.local`: `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `SUP
 `/` home · `/acerca-de` about + contact form (posts to `app/api/contact/route.ts`, sends via
 Resend) · `/biblioteca` catalog · `/juegos/[id]` detail · `/juegos/[id]/jugar` player screen ·
 `/salon-de-la-fama` leaderboards · `/login` auth · `/admin/juegos` admin CRUD over `games`
-(gated by `profiles.is_admin`). (see `references/implemented-games.md`) when you need to check 
-which games are impelemted and how to implement new one.
+(gated by `profiles.is_admin`). Read `references/implemented-games.md` when you need to know which
+games exist today and how a new one gets added.
 
 Path alias `@/*` maps to the repo root. Styling is Tailwind CSS v4 via `@tailwindcss/postcss`,
 plus a large hand-written CRT/arcade stylesheet in `app/globals.css` (game covers, `.crt-screen`,
@@ -106,7 +118,9 @@ a new game. A game's cover is a `.cover-<id>` class in `app/globals.css` **and**
 ### Reference material (`references/`, not part of the build)
 
 `templates/` — the original JSX/HTML designs each screen was ported from. `started-games/` —
-vanilla-JS games available to port (`/arcade-game` reads these). `source-assets/` — sprites.
+vanilla-JS games available to port (`/arcade-game` reads these); all three are already ported.
+`source-assets/` — sprites. `implemented-games.md` — the current catalog, game by game.
+`game-proposals.md` — `game-planner`'s memory of what has been proposed, recommended and discarded.
 ESLint/Prettier ignore this tree; it has known errors and must not be linted or "fixed".
 
 ### Next.js version
