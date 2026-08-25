@@ -1257,6 +1257,56 @@ a {
   box-shadow: 0 0 6px var(--green);
 }
 
+/* overlay de controles táctiles (TouchControls) — oculto por defecto; solo aparece en
+   dispositivos táctiles reales, nunca en desktop con mouse (ver specs/12) */
+.touch-controls {
+  position: absolute;
+  inset: 0;
+  display: none;
+  pointer-events: none;
+}
+.touch-controls__button {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* cqw/cqh, no px fijo: el tamaño escala con el ancho/alto real del canvas letterboxed (el
+     contenedor con `container-type: size` de game-canvas.tsx), así un botón no se solapa con
+     otro en un canvas angosto como el de Tetris (400×600) igual que en uno ancho como el de
+     Asteroides (800×600). */
+  width: clamp(40px, 18cqw, 84px);
+  height: clamp(30px, 14cqh, 60px);
+  padding: 4px 8px;
+  transform: translate(-50%, -50%);
+  border-radius: 999px;
+  border: 2px solid var(--skin-primary, var(--cyan));
+  background: rgba(6, 10, 16, 0.6);
+  box-shadow: 0 0 8px var(--skin-primary, var(--cyan));
+  color: var(--skin-ink, var(--cyan));
+  font-family: var(--pixel);
+  font-size: 8px;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  text-align: center;
+  white-space: normal;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.touch-controls__button:active {
+  transform: translate(-50%, -50%) scale(0.9);
+  border-color: var(--skin-accent, var(--yellow));
+  box-shadow: 0 0 16px var(--skin-primary, var(--cyan));
+}
+@media (pointer: coarse) {
+  .touch-controls {
+    display: block;
+  }
+  .touch-controls__button {
+    pointer-events: auto;
+  }
+}
+
 /* fake in-screen game */
 .game-arena {
   position: absolute;

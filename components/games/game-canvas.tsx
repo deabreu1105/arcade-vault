@@ -2,6 +2,8 @@
 
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import type { ArcadeEngine, EngineCallbacks } from "@/components/games/engine-base";
+import type { TouchButton } from "@/components/games/registry";
+import { TouchControls } from "@/components/games/touch-controls";
 import { useSkin } from "@/components/skin-provider";
 
 export type GameCanvasHandle = {
@@ -16,8 +18,10 @@ export type GameCanvasProps = EngineCallbacks & {
   height: number;
   /** Códigos de tecla (`event.code`) a capturar con preventDefault mientras el canvas está montado. */
   capturedKeys: string[];
-  /** Habilita el mapeo de mouse a coordenadas lógicas del canvas (para juegos que usan puntero). */
+  /** Habilita el mapeo de mouse/táctil a coordenadas lógicas del canvas (juegos con puntero). */
   pointer?: boolean;
+  /** Overlay de botones táctiles a montar sobre el canvas, visible solo en pantallas táctiles. */
+  touchControls?: TouchButton[];
   /** Instancia el motor concreto del juego. Se llama una sola vez, al montar. */
   loadEngine: (
     ctx: CanvasRenderingContext2D,
@@ -40,6 +44,7 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
     height,
     capturedKeys,
     pointer,
+    touchControls,
     loadEngine,
     onScoreChange,
     onLivesChange,
@@ -106,24 +111,40 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
       window.addEventListener("keydown", handleKeyDown);
       window.addEventListener("keyup", handleKeyUp);
 
-      const toLogical = (e: MouseEvent) => {
+      const toLogical = (clientX: number, clientY: number) => {
         const rect = canvas.getBoundingClientRect();
         return {
-          x: ((e.clientX - rect.left) * width) / rect.width,
-          y: ((e.clientY - rect.top) * height) / rect.height,
+          x: ((clientX - rect.left) * width) / rect.width,
+          y: ((clientY - rect.top) * height) / rect.height,
         };
       };
       const handlePointerMove = (e: MouseEvent) => {
-        const { x, y } = toLogical(e);
+        const { x, y } = toLogical(e.clientX, e.clientY);
         engine.handlePointerMove(x, y);
       };
       const handlePointerDown = (e: MouseEvent) => {
-        const { x, y } = toLogical(e);
+        const { x, y } = toLogical(e.clientX, e.clientY);
         engine.handlePointerDown(x, y);
+      };
+      const handleTouchStart = (e: TouchEvent) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        if (!touch) return;
+        const { x, y } = toLogical(touch.clientX, touch.clientY);
+        engine.handlePointerDown(x, y);
+      };
+      const handleTouchMove = (e: TouchEvent) => {
+        e.preventDefault();
+        const touch = e.touches[0];
+        if (!touch) return;
+        const { x, y } = toLogical(touch.clientX, touch.clientY);
+        engine.handlePointerMove(x, y);
       };
       if (pointer) {
         canvas.addEventListener("mousemove", handlePointerMove);
         canvas.addEventListener("mousedown", handlePointerDown);
+        canvas.addEventListener("touchstart", handleTouchStart, { passive: false });
+        canvas.addEventListener("touchmove", handleTouchMove, { passive: false });
       }
 
       cleanupListeners = () => {
@@ -132,6 +153,8 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
         if (pointer) {
           canvas.removeEventListener("mousemove", handlePointerMove);
           canvas.removeEventListener("mousedown", handlePointerDown);
+          canvas.removeEventListener("touchstart", handleTouchStart);
+          canvas.removeEventListener("touchmove", handleTouchMove);
         }
         engine.destroy();
         engineRef.current = null;
@@ -146,19 +169,33 @@ export const GameCanvas = forwardRef<GameCanvasHandle, GameCanvasProps>(function
   }, []);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
+    <div
       style={{
         position: "absolute",
         inset: 0,
         margin: "auto",
-        width: "auto",
-        height: "auto",
+        aspectRatio: `${width} / ${height}`,
         maxWidth: "100%",
         maxHeight: "100%",
+        // `containerType` habilita unidades cqw/cqh en `.touch-controls__button`, para que su
+        // tamaño escale con el tamaño real ya letterboxed del canvas (fijarlo en px se solapaba
+        // en canvases angostos como el de Tetris, ver specs/12).
+        containerType: "size",
       }}
-    />
+    >
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        style={{ display: "block", width: "100%", height: "100%", touchAction: "none" }}
+      />
+      {touchControls && (
+        <TouchControls
+          buttons={touchControls}
+          onDown={(code) => engineRef.current?.handleKeyDown(code)}
+          onUp={(code) => engineRef.current?.handleKeyUp(code)}
+        />
+      )}
+    </div>
   );
 });
